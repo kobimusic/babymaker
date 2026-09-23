@@ -1,0 +1,267 @@
+{
+ "midi": "../midi/gymnopedie1.mid",
+ "fonts": {
+  "a320": {
+   "path": "../fonts/A320U.sf2",
+   "preset": 0,
+   "label": "A320U grand"
+  },
+  "fluid": {
+   "path": "../fonts/FluidR3_GM.sf2",
+   "preset": 0,
+   "label": "FluidR3 Yamaha grand"
+  },
+  "tbo": {
+   "path": "../fonts/TBOSf.sf2",
+   "preset": 0,
+   "label": "TBO grand"
+  },
+  "msgs": {
+   "path": "../fonts/MS_Basic.sf2",
+   "preset": 0,
+   "label": "Microsoft GS Wavetable"
+  },
+  "fairlight": {
+   "path": "../fonts/piano.sf2",
+   "preset": 0,
+   "label": "Fairlight piano"
+  },
+  "mkds": {
+   "path": "../fonts/Mario Kart DS Soundfont.sf2",
+   "preset": 0,
+   "label": "Mario Kart DS piano"
+  },
+  "fb01": {
+   "path": "../fonts/FB01.sf2",
+   "preset": 1,
+   "label": "Yamaha FB-01 (FM)"
+  },
+  "opl4": {
+   "path": "../fonts/OPL4_XI_GM_set__WIP_.sf2",
+   "preset": 0,
+   "label": "OPL4 (FM)"
+  }
+ },
+ "reverb": 0.24,
+ "reverb_s": 2.6,
+ "key_span": 2,
+ "hold_max": 7.0,
+ "tail": 3.0,
+ "out": "../renders/pianos_long.wav",
+ "path": [
+  [
+   0.0,
+   {
+    "a320": 1
+   }
+  ],
+  [
+   6.12,
+   {
+    "a320": 1
+   }
+  ],
+  [
+   10.799999999999999,
+   {
+    "fluid": 1
+   }
+  ],
+  [
+   15.12,
+   {
+    "fluid": 1
+   }
+  ],
+  [
+   19.8,
+   {
+    "tbo": 1
+   }
+  ],
+  [
+   23.04,
+   {
+    "tbo": 1
+   }
+  ],
+  [
+   28.8,
+   {
+    "a320": 0.34,
+    "fluid": 0.33,
+    "tbo": 0.33
+   }
+  ],
+  [
+   32.4,
+   {
+    "a320": 0.55,
+    "fluid": 0.15,
+    "tbo": 0.3
+   }
+  ],
+  [
+   35.82,
+   {
+    "a320": 0.2,
+    "fluid": 0.5,
+    "tbo": 0.3
+   }
+  ],
+  [
+   36.0,
+   {
+    "msgs": 1
+   }
+  ],
+  [
+   41.865,
+   {
+    "msgs": 1
+   }
+  ],
+  [
+   46.35,
+   {
+    "fairlight": 1
+   }
+  ],
+  [
+   50.49,
+   {
+    "fairlight": 1
+   }
+  ],
+  [
+   54.975,
+   {
+    "mkds": 1
+   }
+  ],
+  [
+   58.08,
+   {
+    "mkds": 1
+   }
+  ],
+  [
+   63.6,
+   {
+    "msgs": 0.34,
+    "fairlight": 0.33,
+    "mkds": 0.33
+   }
+  ],
+  [
+   67.05,
+   {
+    "msgs": 0.55,
+    "fairlight": 0.15,
+    "mkds": 0.3
+   }
+  ],
+  [
+   70.3275,
+   {
+    "msgs": 0.2,
+    "fairlight": 0.5,
+    "mkds": 0.3
+   }
+  ],
+  [
+   70.5,
+   {
+    "fb01": 1
+   }
+  ],
+  [
+   74.95400000000001,
+   {
+    "fb01": 1
+   }
+  ],
+  [
+   78.36,
+   {
+    "opl4": 1
+   }
+  ],
+  [
+   81.504,
+   {
+    "opl4": 1
+   }
+  ],
+  [
+   84.91,
+   {
+    "fluid": 1
+   }
+  ],
+  [
+   87.268,
+   {
+    "fluid": 1
+   }
+  ],
+  [
+   91.46000000000001,
+   {
+    "fb01": 0.34,
+    "opl4": 0.33,
+    "fluid": 0.33
+   }
+  ],
+  [
+   94.08,
+   {
+    "fb01": 0.55,
+    "opl4": 0.15,
+    "fluid": 0.3
+   }
+  ],
+  [
+   96.569,
+   {
+    "fb01": 0.2,
+    "opl4": 0.5,
+    "fluid": 0.3
+   }
+  ]
+ ],
+ "start": 0.0,
+ "end": 96.7,
+ "trios": [
+  {
+   "name": "normal grands",
+   "fonts": [
+    "a320",
+    "fluid",
+    "tbo"
+   ],
+   "t0": 0.0,
+   "t1": 36.0
+  },
+  {
+   "name": "nostalgia",
+   "fonts": [
+    "msgs",
+    "fairlight",
+    "mkds"
+   ],
+   "t0": 36.0,
+   "t1": 70.5
+  },
+  {
+   "name": "the weird set",
+   "fonts": [
+    "fb01",
+    "opl4",
+    "fluid"
+   ],
+   "t0": 70.5,
+   "t1": 96.7
+  }
+ ]
+}

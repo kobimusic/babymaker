@@ -1,0 +1,99 @@
+{
+ "midi": "../midi/gymnopedie1.mid",
+ "fonts": {
+  "a320": {
+   "path": "../fonts/A320U.sf2",
+   "preset": 0,
+   "label": "A320U grand"
+  },
+  "fluid": {
+   "path": "../fonts/FluidR3_GM.sf2",
+   "preset": 0,
+   "label": "FluidR3 Yamaha grand"
+  },
+  "tbo": {
+   "path": "../fonts/TBOSf.sf2",
+   "preset": 0,
+   "label": "TBO grand"
+  },
+  "msgs": {
+   "path": "../fonts/MS_Basic.sf2",
+   "preset": 0,
+   "label": "Microsoft GS Wavetable"
+  },
+  "fairlight": {
+   "path": "../fonts/piano.sf2",
+   "preset": 0,
+   "label": "Fairlight piano"
+  },
+  "mkds": {
+   "path": "../fonts/Mario Kart DS Soundfont.sf2",
+   "preset": 0,
+   "label": "Mario Kart DS piano"
+  },
+  "fb01": {
+   "path": "../fonts/FB01.sf2",
+   "preset": 1,
+   "label": "Yamaha FB-01 (FM)"
+  },
+  "opl4": {
+   "path": "../fonts/OPL4_XI_GM_set__WIP_.sf2",
+   "preset": 0,
+   "label": "OPL4 (FM)"
+  }
+ },
+ "reverb": 0.24,
+ "reverb_s": 2.6,
+ "key_span": 2,
+ "hold_max": 7.0,
+ "tail": 1.6,
+ "out": "../renders/pianos_short.wav",
+ "path": [
+  [
+   9.0,
+   {
+    "fluid": 1
+   }
+  ],
+  [
+   10.6,
+   {
+    "fluid": 1
+   }
+  ],
+  [
+   12.6,
+   {
+    "msgs": 1
+   }
+  ],
+  [
+   14.4,
+   {
+    "fairlight": 1
+   }
+  ],
+  [
+   16.8,
+   {
+    "fluid": 0.34,
+    "msgs": 0.33,
+    "fairlight": 0.33
+   }
+  ]
+ ],
+ "start": 9.0,
+ "end": 17.9,
+ "trios": [
+  {
+   "name": "",
+   "fonts": [
+    "fluid",
+    "msgs",
+    "fairlight"
+   ],
+   "t0": 9.0,
+   "t1": 17.9
+  }
+ ]
+}

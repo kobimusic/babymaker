@@ -1,0 +1,92 @@
+{
+ "midi": "../midi/dotabata.mid",
+ "fonts": {
+  "fluid": {
+   "path": "../fonts/FluidR3_GM.sf2",
+   "label": "FluidR3 GM"
+  },
+  "msgs": {
+   "path": "../fonts/MS_Basic.sf2",
+   "label": "Microsoft GS Wavetable"
+  },
+  "fb01": {
+   "path": "../fonts/FB01.sf2",
+   "label": "Yamaha FB-01 (FM)"
+  }
+ },
+ "reverb": 0.14,
+ "reverb_s": 1.8,
+ "key_span": 2,
+ "hold_max": 4.0,
+ "tail": 1.2,
+ "bend_range": 2.0,
+ "out": "../renders/band_long.wav",
+ "path": [
+  [
+   0,
+   {
+    "fluid": 1
+   }
+  ],
+  [
+   17.4,
+   {
+    "fluid": 1
+   }
+  ],
+  [
+   25.7,
+   {
+    "msgs": 1
+   }
+  ],
+  [
+   32.5,
+   {
+    "msgs": 1
+   }
+  ],
+  [
+   40.5,
+   {
+    "fb01": 1
+   }
+  ],
+  [
+   45.0,
+   {
+    "fb01": 1
+   }
+  ],
+  [
+   51.3,
+   {
+    "fluid": 0.34,
+    "msgs": 0.33,
+    "fb01": 0.33
+   }
+  ],
+  [
+   57.5,
+   {
+    "fluid": 0.45,
+    "msgs": 0.2,
+    "fb01": 0.35
+   }
+  ]
+ ],
+ "start": 3.4,
+ "end": 57.5,
+ "trios": [
+  {
+   "name": "",
+   "fonts": [
+    "fluid",
+    "msgs",
+    "fb01"
+   ],
+   "t0": 3.4,
+   "t1": 57.5
+  }
+ ]
+}
