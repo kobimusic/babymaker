@@ -1,0 +1,101 @@
+/* One custom property drives the whole element: change --ring and the
+   stroke, the numeral and the label all follow. */
+
+.progress {
+  --ring: 8rem;
+  --arc-w: 2.5;          /* in the 64-unit viewBox, so it scales with --ring */
+  --num: 0.21;           /* numeral size, as a fraction of the ring */
+
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--ring);
+  height: var(--ring);
+  flex: none;
+}
+
+/* A loader that appears instantly is worse than none at all when the work
+   takes 80ms: the flash reads as a fault. So it fades in only if it is
+   still on screen after a beat — in CSS, so this stays a plain component
+   with no timers of its own. */
+.delayed { animation: appear var(--dur) var(--ease) 240ms both; }
+@keyframes appear { from { opacity: 0 } to { opacity: 1 } }
+
+.ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);   /* 0% at twelve o'clock */
+  overflow: visible;
+}
+.track { fill: none; stroke: var(--rule); stroke-width: var(--arc-w); }
+.arc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: var(--arc-w);
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--dur) var(--ease);
+}
+/* `driven`: the caller already animates `value` a frame at a time, so the
+   arc should track it exactly rather than smoothing towards a target that
+   keeps moving before the transition gets there. */
+.driven .arc { transition: none; }
+
+/* Indeterminate: a fixed sweep going round, for work whose size is not
+   known ahead of time. */
+.sweep {
+  animation: sweep 1.15s linear infinite;
+  transform-origin: 50% 50%;
+  stroke-linecap: round;
+  transition: none;
+}
+@keyframes sweep { to { transform: rotate(360deg) } }
+
+.value {
+  font-family: var(--font-serif);
+  font-size: calc(var(--ring) * var(--num));
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;   /* the ring must not twitch as digits change */
+}
+.sign { font-size: max(0.62em, var(--t-floor)); color: var(--ink-soft); margin-left: 0.08em; }
+
+.label {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.4rem;
+  font-size: var(--t-small);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* ---- sizes -------------------------------------------------------- */
+
+.sm { --ring: 1.5rem; --arc-w: 6; }
+.md { --ring: 8rem; }
+.lg { --ring: 12rem; --arc-w: 2; --num: 0.19; }
+
+/* At small sizes there is no room under the ring, so the label sits
+   beside it and the pair reads as one inline object. */
+.sm .label {
+  position: static;
+  margin: 0 0 0 0.55rem;
+  left: 100%;
+}
+.sm {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-width: var(--ring);
+}
+.sm .ring { position: relative; inset: auto; width: var(--ring); height: var(--ring); }
+
+@media (prefers-reduced-motion: reduce) {
+  .arc { transition: none; }
+  /* A still ring reads as stuck rather than calm, so the sweep becomes a
+     breath instead of vanishing. */
+  .sweep { animation: breathe 2.4s var(--ease) infinite; }
+  .delayed { animation: none; }
+  @keyframes breathe { 0%, 100% { opacity: 0.35 } 50% { opacity: 1 } }
+}

@@ -1,0 +1,188 @@
+.wrap { margin: 2rem 0; }
+
+.stage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  touch-action: none;       /* the dots are dragged; don't scroll the page */
+  user-select: none;
+  cursor: default;
+}
+
+.line {
+  stroke: var(--ink);
+  stroke-width: 0.35;
+  stroke-linecap: butt;
+  /* the dash pattern and the distance travelled per cycle match, so the
+     flow is seamless however long the line is */
+  stroke-dasharray: 0.9 1.4;
+  animation: flow 1.4s linear infinite;
+}
+@keyframes flow { to { stroke-dashoffset: -2.3; } }
+
+/* play / stop, in the corner of the stage */
+.transport {
+  position: absolute;
+  left: 2%;
+  bottom: 4%;
+}
+
+.sample { fill: var(--paper); stroke: var(--ink); stroke-width: 0.45; cursor: grab; }
+.sample:active { cursor: grabbing; }
+
+.head { fill: var(--accent); stroke: none; cursor: grab; }
+.headRing { fill: none; stroke: var(--accent); stroke-width: 0.3; opacity: 0.55; pointer-events: none; }
+
+.label {
+  font-family: var(--font-serif);
+  font-size: 2.9px;
+  fill: var(--ink-soft);
+  pointer-events: none;
+}
+.pct {
+  font-family: var(--font-mono);
+  font-size: 2.1px;
+  fill: var(--ink-soft);
+  pointer-events: none;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.4rem;
+  margin-top: 1rem;
+}
+
+.status {
+  font-size: var(--t-small);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.err { color: var(--accent); }
+
+.stageWrap { position: relative; }
+
+.sampleOpen { stroke-width: 0.8; }
+
+/* the instrument picker, hung under the dot that was clicked */
+.menu {
+  position: absolute;
+  transform: translate(-50%, 0.9rem);
+  z-index: 5;
+  min-width: 11rem;
+  padding: 0.55rem 0.4rem 0.4rem;
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.menuTitle { display: block; padding: 0 0.6rem 0.4rem; }
+
+.menuItem {
+  font-family: var(--font-serif);
+  font-size: 0.98rem;
+  text-align: left;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-radius: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.menuItem:hover:not(:disabled), .menuItem:focus-visible { background: var(--wash); outline: none; }
+.menuItem:disabled { color: var(--ink-faint); cursor: default; }
+.menuCurrent { color: var(--accent); }
+.menuNote { font-size: var(--t-small); color: var(--ink-faint); align-self: center; }
+
+.credit { flex-basis: 100%; font-size: 0.82rem; color: var(--ink-soft); }
+.credit a { color: inherit; }
+
+/* ---- loading: the stage greys out behind a radial percentage ---- */
+
+.dim {
+  filter: grayscale(1) opacity(0.28);
+  transition: filter var(--dur) var(--ease);
+  pointer-events: none;
+}
+
+/* the whole stage is the load button until the instruments are in */
+.startBtn {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  /* above the dots: dead centre is where the playhead sits */
+  place-items: start center;
+  padding-top: 6%;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.startHint {
+  font-size: var(--t-body);
+  border-bottom: var(--line) solid transparent;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.startBtn:hover .startHint,
+.startBtn:focus-visible .startHint { color: var(--ink); border-bottom-color: var(--ink); }
+.startBtn:focus-visible { outline: none; }
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+/* Until the instruments are in, the stage sits under a wash that deepens
+   towards the bottom — so the greyed-out demo reads as a surface waiting
+   to be woken rather than as something that failed to draw. */
+.preFade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--paper-0) 38%, var(--wash-firm));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dim { transition: none; }
+  .line { animation: none; }
+}
+
+/* ---- standalone build: the site's IconButton and Label, inlined ---- */
+
+.transport {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: var(--paper);
+  border: 1.25px solid var(--ink);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.transport svg { width: 0.95rem; height: 0.95rem; fill: currentColor; }
+.transport:focus-visible { outline: none; background: var(--ink); color: var(--paper); }
+@media (hover: hover) {
+  .transport:hover { background: var(--ink); color: var(--paper); }
+}
+
+.label2 {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}

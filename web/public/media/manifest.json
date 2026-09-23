@@ -1,0 +1,54 @@
+{
+ "note": 76,
+ "sr": 44100,
+ "default": [
+  2,
+  3,
+  0
+ ],
+ "credit": {
+  "name": "Sonatina Symphonic Orchestra",
+  "author": "Mattias Westlund",
+  "license": "CC Sampling Plus 1.0",
+  "url": "https://github.com/peastman/sso"
+ },
+ "midi": "alla-turca.mid",
+ "instruments": [
+  {
+   "id": "harp",
+   "label": "harp",
+   "file": "harp.wav",
+   "peakRmsIn": 0.34212856698849264
+  },
+  {
+   "id": "piano",
+   "label": "piano",
+   "file": "piano.wav",
+   "peakRmsIn": 0.1815260218332638
+  },
+  {
+   "id": "flute",
+   "label": "flute",
+   "file": "flute.wav",
+   "peakRmsIn": 0.2937355815825425
+  },
+  {
+   "id": "violin",
+   "label": "violin",
+   "file": "violin.wav",
+   "peakRmsIn": 0.28013457185665663
+  },
+  {
+   "id": "viola",
+   "label": "viola",
+   "file": "viola.wav",
+   "peakRmsIn": 0.1267684799127357
+  },
+  {
+   "id": "oboe",
+   "label": "oboe",
+   "file": "oboe.wav",
+   "peakRmsIn": 0.3566807096583521
+  }
+ ]
+}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Soundfont Babies</title>
+    <meta name="description" content="Six orchestral instruments, morphed in the DCT domain into any point between three of them, while Mozart plays." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <main>
+      <h1>making soundfont babies?</h1>
+      <p class="date">babymaker demo</p>
+
+      <p>
+        Three instruments sit on the dots. The pink dot is the playhead: wherever you drag it,
+        the note Mozart is playing is rebuilt from the three at the weights the lines show.
+        Click a dot to swap its instrument; drag the dots around too. This is not a crossfade:
+        the attack, the formants, the harmonics and the decay each land in between.
+      </p>
+
+      <div id="demo"></div>
+
+      <h2>how it works</h2>
+      <p>
+        Every note is taken apart in the MCLT domain into a level per frame, a spectral envelope
+        (Röbel and Rodet's true envelope), the fine structure under it, and time. The sources are
+        aligned with DTW on level and low-order cepstrum, so a slow and a fast attack interpolate
+        in length. Level and envelope are averaged in dB and the fine structure in |a|<sup>0.6</sup>.
+        The waveform comes from the recordings: each source is WSOLA-warped onto the shared
+        timeline, the warped sources are summed with the weights, the mix's magnitudes are swapped
+        for the model's, and two Griffin-Lim passes make them agree.
+      </p>
+      <p>
+        This page runs the TypeScript port in a Web Worker, with <code>env_mode="log"</code>.
+        The Python version also morphs the formant band as an optimal-transport barycentre.
+        See the repository's README for the details.
+      </p>
+    </main>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

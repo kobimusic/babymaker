@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "babymaker"
+version = "0.1.0"
+description = "N-way DCT-domain morphing of instrument samples: attack, formants, harmonics and decay all interpolate"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy", "scipy", "soundfile", "soxr"]
+
+[project.optional-dependencies]
+fast = ["numba"]          # DTW and WSOLA kernels; ~5x faster CPU path
+gpu = ["torch"]           # batched CUDA backend (babymaker/gpu.py)
+test = ["pytest"]
+
+[project.scripts]
+babymaker = "babymaker.cli:main"
+
+[tool.setuptools]
+packages = ["babymaker"]

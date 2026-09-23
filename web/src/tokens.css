@@ -1,0 +1,57 @@
+/* The kobimusic site's tokens, cut down to what the demo uses. */
+
+:root {
+  --ink-rgb: 13 13 13;
+  --paper-rgb: 253 253 251;
+  --accent-rgb: 183 62 106;
+
+  --ink: rgb(var(--ink-rgb));
+  --ink-soft: rgb(74 74 72);
+  --ink-faint: rgb(var(--ink-rgb) / 0.42);
+  --rule: rgb(var(--ink-rgb) / 0.16);
+  --wash: rgb(var(--ink-rgb) / 0.05);
+  --wash-firm: rgb(var(--ink-rgb) / 0.10);
+  --accent: rgb(var(--accent-rgb));
+  --paper: rgb(var(--paper-rgb));
+  --paper-0: rgb(var(--paper-rgb) / 0);
+
+  --font-serif: "EB Garamond", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --t-body: 1.12rem;
+  --t-small: 0.9rem;
+  --t-floor: 0px;
+  --line: 1.5px;
+  --radius-sm: 0.9rem;
+  --radius-pill: 999px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur: 200ms;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink-rgb: 236 234 228;
+    --paper-rgb: 22 22 21;
+    --accent-rgb: 232 112 156;
+    --ink-soft: rgb(180 178 172);
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: var(--t-body);
+  line-height: 1.55;
+}
+
+main { max-width: 42rem; margin: 0 auto; padding: 3rem 16px 4rem; }
+h1 { font-weight: 500; font-size: 2.2rem; margin: 0 0 0.4rem; }
+h2 { font-weight: 500; font-size: 1.35rem; margin: 2.4rem 0 0.6rem; }
+.date { color: var(--ink-soft); font-size: var(--t-small); margin: 0 0 1.6rem; }
+a { color: var(--accent); }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--wash); padding: 0.05em 0.3em; border-radius: 0.25em; }
