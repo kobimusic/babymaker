@@ -196,6 +196,15 @@ def test_weights_validation():
         pass
 
 
+def test_smooth_map_shorter_than_kernel():
+    # a short source (a staccato note) has fewer frames than the smoothing kernel reaches
+    g = np.cumsum(np.r_[0.0, np.full(29, 1.3)])
+    gs = smooth_map(g, 13.8)
+    assert gs.shape == g.shape
+    assert gs[0] == g[0] and abs(gs[-1] - g[-1]) < 1e-9
+    assert np.all(np.diff(gs) >= 0)
+
+
 def test_end_to_end_sf2():
     if not (os.path.exists(SF2_A) and os.path.exists(SF2_B)):
         print("skipping sf2 test (fonts not found)")

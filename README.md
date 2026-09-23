@@ -73,6 +73,23 @@ mp = Morpher(srcs, MorphConfig(sr=44100))     # analysis once
 y = mp.render([0.2, 0.3, 0.5])                # float64 mono, any weights
 ```
 
+## Playing a MIDI file through morphed soundfonts
+
+`babymaker/arrange.py` plays a whole MIDI file where each instrument is a baby of several
+soundfonts, and the weights can move while it plays. Each note is played by the morph at
+the weights in effect when it starts, the same way the browser demo does it. Each track
+morphs its own program across the fonts (or a fixed preset from the plan), and the sampler
+handles velocity, volume and expression, pan, the sustain pedal, the pitch wheel and a
+light reverb.
+
+```bash
+python3 -m babymaker.arrange video/plans/pianos_long.json    # needs pretty_midi
+```
+
+A plan names the MIDI file, the fonts, and a path of `[seconds, {font: weight}]`
+keyframes. See the docstring at the top of `arrange.py`. The Satie and DOTABATA clips in the
+videos (`video/`) come from these plans.
+
 ## How it works
 
 **Sources** (`sources.py`).  sf2 notes are rendered through the bundled

@@ -7,3 +7,8 @@ render/tsfrender
 out/
 node_modules/
 web/dist/
+video/work/
+video/out/
+video/renders/
+video/fonts/
+video/midi/

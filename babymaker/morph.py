@@ -141,7 +141,7 @@ def smooth_map(g: np.ndarray, sigma_frames: float) -> np.ndarray:
     n = g.shape[0]
     if sigma_frames < 0.5 or n < 3:
         return g
-    r = int(3 * sigma_frames)
+    r = min(int(3 * sigma_frames), n - 1)     # a map shorter than the kernel: reflect only what exists
     k = np.exp(-0.5 * (np.arange(-r, r + 1) / sigma_frames) ** 2)
     k /= k.sum()
     padded = np.concatenate([2 * g[0] - g[r:0:-1], g, 2 * g[-1] - g[-2:-r - 2:-1]])   # odd reflection
