@@ -31,10 +31,11 @@ SOFT = (0x4A / 255, 0x4A / 255, 0x48 / 255)
 FAINT = (0x8C / 255, 0x8C / 255, 0x8A / 255)
 RULE = (0xDC / 255, 0xDC / 255, 0xDA / 255)
 ACCENT = (0xB7 / 255, 0x3E / 255, 0x6A / 255)
-# the three corners of a roll's triangle
-SLOT = [(0xB7 / 255, 0x3E / 255, 0x6A / 255),      # rose (the site's accent)
-        (0x2F / 255, 0x5D / 255, 0x8A / 255),      # slate blue
-        (0xC0 / 255, 0x8A / 255, 0x2B / 255)]      # ochre
+# a roll's sources, in fixed order: the site's rose first, then the dataviz reference hues.
+# Validated (validate_palette.js, light, on the paper): lightness, chroma and the normal-vision
+# floor pass; the one CVD pair in the 6-8 band is legal because every source is labelled.
+HEX = ["#B73E6A", "#2a78d6", "#c98500", "#008300", "#4a3aa7", "#eb6834", "#1baf7a", "#e34948"]
+SLOT = [tuple(int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)) for h in HEX]
 SERIF = "EB Garamond"
 MONO = "DejaVu Sans Mono"
 
@@ -141,7 +142,7 @@ def draw_triangle(ctx, spec, t, level):
         ln = math.hypot(vx, vy)
         if ln < 3 * sc:
             # the playhead is on this dot: put the label outside the triangle instead
-            cxs, cys = P(sum(d[0] for d in dots) / 3, sum(d[1] for d in dots) / 3)
+            cxs, cys = P(sum(d[0] for d in dots) / len(dots), sum(d[1] for d in dots) / len(dots))
             vx, vy = x - cxs, y - cys
             ln = math.hypot(vx, vy)
         lx, ly = x + vx / ln * 7.5 * sc, y + vy / ln * 7.5 * sc
@@ -205,7 +206,17 @@ def trio_at(trios, t):
 def slot_weights(w, trio):
     ws = [max(0.0, w.get(f, 0.0)) for f in trio["fonts"]]
     s = sum(ws)
-    return [x / s for x in ws] if s > 0 else [1 / 3] * 3
+    return [x / s for x in ws] if s > 0 else [1 / len(ws)] * len(ws)
+
+
+def polygon(n, cx=400, cy=590, R=235):
+    """Where a set's sources sit: the old triangle for three, a regular n-gon otherwise."""
+    if n == 3:
+        return [(cx, cy - R), (cx - R * math.sin(math.pi / 3) * 1.08, cy + R * 0.62),
+                (cx + R * math.sin(math.pi / 3) * 1.08, cy + R * 0.62)]
+    r = 205
+    return [(cx + r * math.cos(-math.pi / 2 + 2 * math.pi * k / n), cy - 15 + r * math.sin(-math.pi / 2 + 2 * math.pi * k / n))
+            for k in range(n)]
 
 
 def draw_roll(ctx, spec, t, level):
@@ -226,10 +237,11 @@ def draw_roll(ctx, spec, t, level):
         a = ease(age / 0.6) if age < 0.6 else 1.0
         text(ctx, tr["name"], 92, 200, 30, ACCENT, alpha=a)
 
-    # ---- the triangle of fonts
-    cx, cy, R = 400, 590, 235
-    verts = [(cx, cy - R), (cx - R * math.sin(math.pi / 3) * 1.08, cy + R * 0.62),
-             (cx + R * math.sin(math.pi / 3) * 1.08, cy + R * 0.62)]
+    # ---- the polygon of fonts
+    n = len(tr["fonts"])
+    verts = polygon(n)
+    cx = sum(v[0] for v in verts) / n
+    cy = sum(v[1] for v in verts) / n
     ctx.set_source_rgb(*RULE)
     ctx.set_line_width(2.0)
     ctx.move_to(*verts[0])
@@ -240,8 +252,8 @@ def draw_roll(ctx, spec, t, level):
     hx = sum(w * v[0] for w, v in zip(sw, verts))
     hy = sum(w * v[1] for w, v in zip(sw, verts))
     for k, (v, wk) in enumerate(zip(verts, sw)):
-        ctx.set_source_rgba(*SLOT[k], 0.15 + 0.85 * wk)
-        ctx.set_line_width(3.2)
+        ctx.set_source_rgba(*SLOT[k], 0.12 + 0.88 * wk)
+        ctx.set_line_width(3.2 if n <= 4 else 2.6)
         ctx.set_dash([7, 9], -16 * ((t / 1.4) % 1.0))
         ctx.move_to(*v)
         ctx.line_to(hx, hy)
@@ -251,20 +263,36 @@ def draw_roll(ctx, spec, t, level):
     la = ease(age / 0.6) if (age < 0.6 and tr is not trios[0]) else 1.0
     for k, (v, f) in enumerate(zip(verts, tr["fonts"])):
         ctx.new_sub_path()
-        ctx.arc(v[0], v[1], 17, 0, 2 * math.pi)
+        ctx.arc(v[0], v[1], 17 if n <= 4 else 14, 0, 2 * math.pi)
         ctx.set_source_rgb(*PAPER)
         ctx.fill_preserve()
         ctx.set_source_rgb(*SLOT[k])
         ctx.set_line_width(4)
         ctx.stroke()
-        lab = fonts[f]["label"]
         pct = f"{round(sw[k] * 100)}%"
-        if k == 0:
-            text(ctx, lab, v[0], v[1] - 66, 27, SLOT[k], align="center", alpha=la)
-            text(ctx, pct, v[0], v[1] - 30, 21, SOFT, MONO, align="center")
+        if n == 3:
+            lab = fonts[f]["label"]
+            if k == 0:
+                text(ctx, lab, v[0], v[1] - 66, 27, INK, align="center", alpha=la)
+                text(ctx, pct, v[0], v[1] - 30, 21, SOFT, MONO, align="center")
+            else:
+                text(ctx, lab, v[0], v[1] + 62, 27, INK, align="center", alpha=la)
+                text(ctx, pct, v[0], v[1] + 92, 21, SOFT, MONO, align="center")
         else:
-            text(ctx, lab, v[0], v[1] + 62, 27, SLOT[k], align="center", alpha=la)
-            text(ctx, pct, v[0], v[1] + 92, 21, SOFT, MONO, align="center")
+            # labels pushed out along the spoke from the centre, away from the shape
+            lab = fonts[f].get("short", fonts[f]["label"])
+            ux, uy = v[0] - cx, v[1] - cy
+            ul = math.hypot(ux, uy) or 1.0
+            lx, ly = v[0] + ux / ul * 46, v[1] + uy / ul * 40
+            al = "center" if abs(ux / ul) < 0.35 else ("left" if ux > 0 else "right")
+            if al != "center":
+                lx = v[0] + (26 if ux > 0 else -26)
+                ly = v[1] + 7
+            text(ctx, lab, lx, ly - (10 if al == "center" and uy < 0 else 0) + (14 if al == "center" and uy > 0 else 0),
+                 23, INK, align=al, alpha=la)
+            dy = 24
+            text(ctx, pct, lx, ly + dy - (10 if al == "center" and uy < 0 else 0) + (14 if al == "center" and uy > 0 else 0),
+                 18, SOFT, MONO, align=al, alpha=la)
     r = 12 + min(20, level * 110)
     ctx.new_sub_path()
     ctx.arc(hx, hy, r + 9 + level * 150, 0, 2 * math.pi)
@@ -303,7 +331,11 @@ def draw_roll(ctx, spec, t, level):
         if nt["t"] > tl + win:
             break
         ntr = trio_at(trios, nt["t"] + start)
-        col = mix_rgb([SLOT[k] for k in range(3)], slot_weights(nt["w"], ntr))
+        cw = slot_weights(nt["w"], ntr)
+        if len(cw) > 3:
+            # eight colours averaged by weight go grey; squaring lets the leading sources show
+            cw = [x * x for x in cw]
+        col = mix_rgb(SLOT[:len(ntr["fonts"])], cw)
         a0, a1 = X(nt["t"]), X(max(nt["end"], nt["t"] + 0.06))
         on = nt["t"] <= t <= nt["end"]
         past = nt["end"] < t

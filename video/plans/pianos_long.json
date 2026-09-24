@@ -4,42 +4,50 @@
   "a320": {
    "path": "../fonts/A320U.sf2",
    "preset": 0,
-   "label": "A320U grand"
+   "label": "A320U grand",
+   "short": "A320U"
   },
   "fluid": {
    "path": "../fonts/FluidR3_GM.sf2",
    "preset": 0,
-   "label": "FluidR3 Yamaha grand"
+   "label": "FluidR3 Yamaha grand",
+   "short": "FluidR3"
   },
   "tbo": {
    "path": "../fonts/TBOSf.sf2",
    "preset": 0,
-   "label": "TBO grand"
+   "label": "TBO grand",
+   "short": "TBO"
   },
   "msgs": {
    "path": "../fonts/MS_Basic.sf2",
    "preset": 0,
-   "label": "Microsoft GS Wavetable"
+   "label": "Microsoft GS Wavetable",
+   "short": "MS GS"
   },
   "fairlight": {
    "path": "../fonts/piano.sf2",
    "preset": 0,
-   "label": "Fairlight piano"
+   "label": "Fairlight piano",
+   "short": "Fairlight"
   },
   "mkds": {
    "path": "../fonts/Mario Kart DS Soundfont.sf2",
    "preset": 0,
-   "label": "Mario Kart DS piano"
+   "label": "Mario Kart DS piano",
+   "short": "Mario Kart DS"
   },
   "fb01": {
    "path": "../fonts/FB01.sf2",
    "preset": 1,
-   "label": "Yamaha FB-01 (FM)"
+   "label": "Yamaha FB-01 (FM)",
+   "short": "FB-01"
   },
   "opl4": {
    "path": "../fonts/OPL4_XI_GM_set__WIP_.sf2",
    "preset": 0,
-   "label": "OPL4 (FM)"
+   "label": "OPL4 (FM)",
+   "short": "OPL4"
   }
  },
  "reverb": 0.24,
@@ -52,181 +60,373 @@
   [
    0.0,
    {
-    "a320": 1
+    "a320": 0.279,
+    "fluid": 0.275,
+    "tbo": 0.446
    }
   ],
   [
-   6.12,
+   2.941,
    {
-    "a320": 1
+    "a320": 0.364,
+    "fluid": 0.282,
+    "tbo": 0.354
    }
   ],
   [
-   10.799999999999999,
+   5.841,
    {
-    "fluid": 1
+    "a320": 0.289,
+    "fluid": 0.514,
+    "tbo": 0.196
    }
   ],
   [
-   15.12,
+   8.701,
    {
-    "fluid": 1
+    "a320": 0.232,
+    "fluid": 0.753,
+    "tbo": 0.015
    }
   ],
   [
-   19.8,
+   11.069,
    {
-    "tbo": 1
+    "a320": 0.524,
+    "fluid": 0.374,
+    "tbo": 0.103
    }
   ],
   [
-   23.04,
+   13.787,
    {
-    "tbo": 1
+    "a320": 0.51,
+    "fluid": 0.158,
+    "tbo": 0.332
    }
   ],
   [
-   28.8,
+   16.753,
    {
-    "a320": 0.34,
-    "fluid": 0.33,
-    "tbo": 0.33
+    "a320": 0.243,
+    "fluid": 0.168,
+    "tbo": 0.589
    }
   ],
   [
-   32.4,
+   18.987,
    {
-    "a320": 0.55,
-    "fluid": 0.15,
-    "tbo": 0.3
+    "a320": 0.344,
+    "fluid": 0.27,
+    "tbo": 0.386
    }
   ],
   [
-   35.82,
+   21.152,
    {
-    "a320": 0.2,
-    "fluid": 0.5,
-    "tbo": 0.3
+    "a320": 0.132,
+    "fluid": 0.502,
+    "tbo": 0.366
    }
   ],
   [
-   36.0,
+   23.904,
    {
-    "msgs": 1
+    "a320": 0.107,
+    "fluid": 0.439,
+    "tbo": 0.454
    }
   ],
   [
-   41.865,
+   26.99,
    {
-    "msgs": 1
+    "a320": 0.107,
+    "fluid": 0.439,
+    "tbo": 0.454
    }
   ],
   [
-   46.35,
-   {
-    "fairlight": 1
-   }
-  ],
-  [
-   50.49,
-   {
-    "fairlight": 1
-   }
-  ],
-  [
-   54.975,
-   {
-    "mkds": 1
-   }
-  ],
-  [
-   58.08,
-   {
-    "mkds": 1
-   }
-  ],
-  [
-   63.6,
-   {
-    "msgs": 0.34,
-    "fairlight": 0.33,
-    "mkds": 0.33
-   }
-  ],
-  [
-   67.05,
-   {
-    "msgs": 0.55,
-    "fairlight": 0.15,
-    "mkds": 0.3
-   }
-  ],
-  [
-   70.3275,
+   27.0,
    {
     "msgs": 0.2,
-    "fairlight": 0.5,
-    "mkds": 0.3
+    "fairlight": 0.106,
+    "mkds": 0.694
    }
   ],
   [
-   70.5,
+   30.2,
    {
-    "fb01": 1
+    "msgs": 1.0
    }
   ],
   [
-   74.95400000000001,
+   32.051,
    {
-    "fb01": 1
+    "msgs": 0.355,
+    "fairlight": 0.384,
+    "mkds": 0.262
    }
   ],
   [
-   78.36,
+   34.4,
    {
-    "opl4": 1
+    "fairlight": 1.0
    }
   ],
   [
-   81.504,
+   37.4,
    {
-    "opl4": 1
+    "mkds": 1.0
    }
   ],
   [
-   84.91,
+   40.043,
    {
-    "fluid": 1
+    "msgs": 0.32,
+    "fairlight": 0.527,
+    "mkds": 0.153
    }
   ],
   [
-   87.268,
+   42.761,
    {
-    "fluid": 1
+    "msgs": 0.237,
+    "fairlight": 0.309,
+    "mkds": 0.454
    }
   ],
   [
-   91.46000000000001,
+   44.946,
    {
-    "fb01": 0.34,
-    "opl4": 0.33,
-    "fluid": 0.33
+    "msgs": 0.472,
+    "fairlight": 0.025,
+    "mkds": 0.503
    }
   ],
   [
-   94.08,
+   48.039,
    {
-    "fb01": 0.55,
-    "opl4": 0.15,
-    "fluid": 0.3
+    "msgs": 0.697,
+    "fairlight": 0.088,
+    "mkds": 0.215
    }
   ],
   [
-   96.569,
+   50.747,
    {
-    "fb01": 0.2,
-    "opl4": 0.5,
-    "fluid": 0.3
+    "msgs": 0.418,
+    "fairlight": 0.519,
+    "mkds": 0.063
+   }
+  ],
+  [
+   53.39,
+   {
+    "msgs": 0.418,
+    "fairlight": 0.519,
+    "mkds": 0.063
+   }
+  ],
+  [
+   53.4,
+   {
+    "a320": 0.007,
+    "fluid": 0.299,
+    "tbo": 0.008,
+    "msgs": 0.089,
+    "fairlight": 0.228,
+    "mkds": 0.063,
+    "fb01": 0.074,
+    "opl4": 0.231
+   }
+  ],
+  [
+   55.958,
+   {
+    "a320": 0.088,
+    "fluid": 0.484,
+    "tbo": 0.024,
+    "msgs": 0.07,
+    "fairlight": 0.14,
+    "mkds": 0.109,
+    "opl4": 0.082
+   }
+  ],
+  [
+   59.029,
+   {
+    "a320": 0.114,
+    "fluid": 0.178,
+    "tbo": 0.098,
+    "msgs": 0.038,
+    "fairlight": 0.226,
+    "mkds": 0.195,
+    "fb01": 0.047,
+    "opl4": 0.104
+   }
+  ],
+  [
+   62.245,
+   {
+    "a320": 0.055,
+    "fluid": 0.096,
+    "tbo": 0.034,
+    "msgs": 0.351,
+    "fairlight": 0.181,
+    "mkds": 0.036,
+    "fb01": 0.027,
+    "opl4": 0.222
+   }
+  ],
+  [
+   65.572,
+   {
+    "a320": 0.221,
+    "tbo": 0.005,
+    "msgs": 0.02,
+    "fairlight": 0.01,
+    "mkds": 0.074,
+    "fb01": 0.646,
+    "opl4": 0.02
+   }
+  ],
+  [
+   68.602,
+   {
+    "a320": 0.006,
+    "fluid": 0.096,
+    "tbo": 0.3,
+    "msgs": 0.176,
+    "fairlight": 0.039,
+    "mkds": 0.02,
+    "fb01": 0.185,
+    "opl4": 0.179
+   }
+  ],
+  [
+   71.673,
+   {
+    "a320": 0.033,
+    "fluid": 0.275,
+    "tbo": 0.028,
+    "msgs": 0.048,
+    "fairlight": 0.061,
+    "mkds": 0.065,
+    "fb01": 0.364,
+    "opl4": 0.126
+   }
+  ],
+  [
+   74.831,
+   {
+    "a320": 0.062,
+    "fluid": 0.095,
+    "tbo": 0.233,
+    "msgs": 0.276,
+    "fairlight": 0.017,
+    "mkds": 0.116,
+    "fb01": 0.014,
+    "opl4": 0.188
+   }
+  ],
+  [
+   77.816,
+   {
+    "a320": 0.043,
+    "fluid": 0.534,
+    "tbo": 0.013,
+    "msgs": 0.045,
+    "fairlight": 0.098,
+    "mkds": 0.011,
+    "fb01": 0.158,
+    "opl4": 0.098
+   }
+  ],
+  [
+   80.116,
+   {
+    "a320": 0.104,
+    "fluid": 0.203,
+    "msgs": 0.287,
+    "fairlight": 0.14,
+    "mkds": 0.028,
+    "fb01": 0.034,
+    "opl4": 0.201
+   }
+  ],
+  [
+   83.234,
+   {
+    "a320": 0.084,
+    "fluid": 0.064,
+    "tbo": 0.1,
+    "fairlight": 0.213,
+    "mkds": 0.099,
+    "fb01": 0.347,
+    "opl4": 0.094
+   }
+  ],
+  [
+   86.22,
+   {
+    "a320": 0.041,
+    "fluid": 0.127,
+    "tbo": 0.095,
+    "msgs": 0.139,
+    "fairlight": 0.054,
+    "mkds": 0.186,
+    "fb01": 0.349,
+    "opl4": 0.009
+   }
+  ],
+  [
+   88.909,
+   {
+    "a320": 0.038,
+    "fluid": 0.178,
+    "tbo": 0.095,
+    "msgs": 0.224,
+    "fairlight": 0.322,
+    "mkds": 0.078,
+    "fb01": 0.039,
+    "opl4": 0.027
+   }
+  ],
+  [
+   91.338,
+   {
+    "a320": 0.105,
+    "fluid": 0.314,
+    "tbo": 0.109,
+    "msgs": 0.017,
+    "fairlight": 0.15,
+    "mkds": 0.057,
+    "fb01": 0.127,
+    "opl4": 0.12
+   }
+  ],
+  [
+   94.359,
+   {
+    "a320": 0.053,
+    "fluid": 0.04,
+    "msgs": 0.073,
+    "fairlight": 0.171,
+    "mkds": 0.226,
+    "fb01": 0.162,
+    "opl4": 0.274
+   }
+  ],
+  [
+   96.69,
+   {
+    "a320": 0.053,
+    "fluid": 0.04,
+    "msgs": 0.073,
+    "fairlight": 0.171,
+    "mkds": 0.226,
+    "fb01": 0.162,
+    "opl4": 0.274
    }
   ]
  ],
@@ -241,7 +441,7 @@
     "tbo"
    ],
    "t0": 0.0,
-   "t1": 36.0
+   "t1": 27.0
   },
   {
    "name": "nostalgia",
@@ -250,17 +450,22 @@
     "fairlight",
     "mkds"
    ],
-   "t0": 36.0,
-   "t1": 70.5
+   "t0": 27.0,
+   "t1": 53.4
   },
   {
-   "name": "the weird set",
+   "name": "all eight pianos",
    "fonts": [
+    "a320",
+    "fluid",
+    "tbo",
+    "msgs",
+    "fairlight",
+    "mkds",
     "fb01",
-    "opl4",
-    "fluid"
+    "opl4"
    ],
-   "t0": 70.5,
+   "t0": 53.4,
    "t1": 96.7
   }
  ]

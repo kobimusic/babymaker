@@ -4,42 +4,50 @@
   "a320": {
    "path": "../fonts/A320U.sf2",
    "preset": 0,
-   "label": "A320U grand"
+   "label": "A320U grand",
+   "short": "A320U"
   },
   "fluid": {
    "path": "../fonts/FluidR3_GM.sf2",
    "preset": 0,
-   "label": "FluidR3 Yamaha grand"
+   "label": "FluidR3 Yamaha grand",
+   "short": "FluidR3"
   },
   "tbo": {
    "path": "../fonts/TBOSf.sf2",
    "preset": 0,
-   "label": "TBO grand"
+   "label": "TBO grand",
+   "short": "TBO"
   },
   "msgs": {
    "path": "../fonts/MS_Basic.sf2",
    "preset": 0,
-   "label": "Microsoft GS Wavetable"
+   "label": "Microsoft GS Wavetable",
+   "short": "MS GS"
   },
   "fairlight": {
    "path": "../fonts/piano.sf2",
    "preset": 0,
-   "label": "Fairlight piano"
+   "label": "Fairlight piano",
+   "short": "Fairlight"
   },
   "mkds": {
    "path": "../fonts/Mario Kart DS Soundfont.sf2",
    "preset": 0,
-   "label": "Mario Kart DS piano"
+   "label": "Mario Kart DS piano",
+   "short": "Mario Kart DS"
   },
   "fb01": {
    "path": "../fonts/FB01.sf2",
    "preset": 1,
-   "label": "Yamaha FB-01 (FM)"
+   "label": "Yamaha FB-01 (FM)",
+   "short": "FB-01"
   },
   "opl4": {
    "path": "../fonts/OPL4_XI_GM_set__WIP_.sf2",
    "preset": 0,
-   "label": "OPL4 (FM)"
+   "label": "OPL4 (FM)",
+   "short": "OPL4"
   }
  },
  "reverb": 0.24,
@@ -52,33 +60,49 @@
   [
    9.0,
    {
-    "fluid": 1
+    "fluid": 0.266,
+    "msgs": 0.051,
+    "fairlight": 0.683
    }
   ],
   [
-   10.6,
+   10.653,
    {
-    "fluid": 1
+    "fluid": 0.355,
+    "msgs": 0.569,
+    "fairlight": 0.076
    }
   ],
   [
-   12.6,
+   12.654,
    {
-    "msgs": 1
+    "fluid": 0.247,
+    "msgs": 0.582,
+    "fairlight": 0.171
    }
   ],
   [
-   14.4,
+   14.252,
    {
-    "fairlight": 1
+    "fluid": 0.006,
+    "msgs": 0.339,
+    "fairlight": 0.655
    }
   ],
   [
-   16.8,
+   16.244,
    {
-    "fluid": 0.34,
-    "msgs": 0.33,
-    "fairlight": 0.33
+    "fluid": 0.463,
+    "msgs": 0.077,
+    "fairlight": 0.46
+   }
+  ],
+  [
+   17.89,
+   {
+    "fluid": 0.463,
+    "msgs": 0.077,
+    "fairlight": 0.46
    }
   ]
  ],

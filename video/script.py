@@ -38,6 +38,10 @@ LONG = {
         "The harp is plucked, so as I get closer to it the notes actually get shorter. The decay is being interpolated too, not only the tone.",
         "In the middle, it is not three sounds stacked on top of each other (which is what a crossfade would give you). It is one note.",
     ],
+    "six": [
+        "It is also not stuck at three. Here are all six samples from the site at the same time, on a hexagon.",
+        "The math does not change. Each source gets a weight, the weights add up to one, and the playhead can land on any mix of all six.",
+    ],
     "gap": [
         "A sample library could give you a flute, a violin and a harp. What it will not give you is a mix of them that sounds like its own instrument.",
         "If I play all three at the same time, you get three sounds and not one. Here are their levels on top of each other, with three attacks, three decays and three different lengths.",
@@ -102,15 +106,14 @@ LONG = {
         "Okay, now the fun part. This is the first Gymnopedie by Satie.",
         "Each note gets rebuilt at wherever the playhead is when that note starts. The first set is normal grand pianos from different soundfonts.",
         "Now the nostalgia set. There is the Microsoft GS wavetable piano (the one Windows used for MIDI), a Fairlight piano, and the piano from Mario Kart DS.",
-        {"cap": "And the weird set, with FM pianos from a Yamaha FB-01 and an OPL4 chip, against a normal grand.",
-         "say": "And the weird set, with FM pianos from a Yamaha F B zero one and an O P L four chip, against a normal grand."},
-        "None of the pianos you hear in the middle of the triangle exist in any soundfont.",
+        "And here are all eight pianos in one shape, with the FM ones and Mario Kart DS included.",
+        "None of the pianos you hear in the middle of these shapes exist in any soundfont.",
     ],
     "band": [
         {"cap": "It also works on a full arrangement. This is DOTABATA, from the Nena MIDI collection.",
          "say": "It also works on a full arrangement. This is Dotabata, from the Nena MIDI collection."},
         "Each track is morphed, including the brass, the slap bass, the organ and the drums. Each one is a baby of the same instrument from three soundfonts.",
-        "The playhead moves the full band at the same time. Here it goes from FluidR3 to the old Windows synth, and then into an FM chip.",
+        "The playhead moves the full band at the same time, through mixes of FluidR3, the old Windows synth and an FM chip.",
         "For the dataset, it would not move like this. Each track would get its own random point, so each render is a slightly different band.",
     ],
     "outro": [

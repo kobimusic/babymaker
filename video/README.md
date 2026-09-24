@@ -15,6 +15,7 @@ The videos have no narration by default. I record the voiceover myself from `VOI
 | `explainer_data.py` | dumps the algorithm's intermediates for the manim chapters |
 | `scenes.py` | the manim chapters (why, the seven parts of the algorithm, what is next) |
 | `frames.py` | the demo scenes (the triangle, the piano roll, the cards), drawn with cairo and piped into ffmpeg |
+| `plans/make_plans.py` | the Satie and DOTABATA plans: the playhead wanders through random mixes and only touches a single source where the script names it. The long Satie ends on all eight pianos |
 | `demo_audio.mjs` | sequences Alla Turca through the TypeScript morph along the triangle's timeline |
 | `bench.py` | times the morph on CPU, GPU and in the TypeScript port, and measures the DCT facts the video quotes |
 | `build.py` | lays out the segments, times them to the script, mixes the music and encodes. Writes `VOICEOVER.md` |
@@ -34,7 +35,8 @@ CUDA_VISIBLE_DEVICES=1 python3 video/tts.py video/work/say_long.json video/work/
 python3 video/explainer_data.py
 CUDA_VISIBLE_DEVICES=1 python3 video/bench.py
 
-# 3. the MIDI renders (plans in video/plans/, paths are relative to the plan)
+# 3. the MIDI renders (plans in video/plans/, written by make_plans.py; paths are relative to the plan)
+python3 video/plans/make_plans.py
 for p in pianos_short band_short pianos_long band_long; do
   CUDA_VISIBLE_DEVICES=1 python3 -m babymaker.arrange video/plans/$p.json
 done

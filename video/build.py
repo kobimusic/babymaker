@@ -124,12 +124,12 @@ def seg_manim(cls, vo, media, quality, ids=None):
             "voice": list(zip(starts, ids)), "narr": {"starts": starts, "ends": ends}}
 
 
-def seg_triangle(name, vo, plan):
+def seg_triangle(name, vo, plan, dots=DOTS, labels=TRIO["labels"], selection=TRIO["selection"]):
     """plan(vo) -> (voice placements, head keyframes, duration)."""
     at, head, dur = plan(vo)
     return {"kind": "triangle", "name": name, "voice": at, "duration": dur,
-            "spec": {"kind": "triangle", "fps": FPS, "duration": dur, "dots": DOTS, "labels": TRIO["labels"],
-                     "selection": TRIO["selection"], "head": head, "music_start": 0.15, "music_end": dur - 0.6,
+            "spec": {"kind": "triangle", "fps": FPS, "duration": dur, "dots": dots, "labels": labels,
+                     "selection": selection, "head": head, "music_start": 0.15, "music_end": dur - 0.6,
                      "fade_in": 0.35, "fade_out": 0.4}}
 
 
@@ -154,30 +154,69 @@ def seg_card(name, dur, title, lines, voice=()):
 
 # ----------------------------------------------------------------------------- the two cuts
 
+def wander(dots, t0, t1, step, seed, alpha=2.0, start=None):
+    """Head keyframes that keep moving through mixes: each stop is a random convex
+    combination of the dots (Dirichlet(alpha) weights), reached by easing the whole way."""
+    rng = np.random.default_rng(seed)
+    d = np.asarray(dots, float)
+    keys, t = [], t0
+    if start is not None:
+        keys.append([t0, tuple(start), 0.0])
+    while t + step <= t1 + 1e-6:
+        prev = t
+        t = min(t1, t + step * rng.uniform(0.85, 1.15))
+        p = rng.dirichlet([alpha] * len(d)) @ d
+        # a move must fit inside its own gap, or Keyframes jumps when the last one lands
+        keys.append([round(t, 3), (round(p[0], 2), round(p[1], 2)), round(0.92 * (t - prev), 3)])
+    return keys
+
+
 def tri_cold(vo):
     s = Seq(vo)
     a0, e0 = s.say("cold.0", 1.0)
     a1, e1 = s.say("cold.1")
-    head = [[0, CENTRE, 0], [a0 + 1.6, (30, 33), 1.6], [a1 + 1.8, (69, 35), 2.0], [e1 - 0.2, (50, 60), 2.0],
-            [e1 + 2.2, (47, 44), 1.8]]
-    return s.at, head, e1 + 2.8
+    dur = e1 + 2.8
+    head = [[0, CENTRE, 0]] + wander(DOTS, 0.0, dur - 0.4, 2.2, 11)
+    return s.at, head, dur
 
 
 def tri_demo(vo):
+    """The walkthrough touches each corner only while the line names it, then mixes."""
     s = Seq(vo)
     a0, e0 = s.say("demo.0", 0.8)
     a1, e1 = s.say("demo.1")
-    a2, e2 = s.say("demo.2", e1 + 3.0)
-    a3, e3 = s.say("demo.3", e2 + 3.2)
-    a4, e4 = s.say("demo.4", e3 + 3.4)
-    head = [[0, CENTRE, 0], [a1 + 0.75 * (e1 - a1), DOTS[0], 1.8], [a2 + 0.4, DOTS[1], 1.9],
-            [a3 + 1.4, DOTS[2], 1.9], [a4 + 0.9, (50.0, 41.3), 1.9]]
-    return s.at, head, e4 + 4.2
+    a2, e2 = s.say("demo.2", e1 + 0.8)
+    a3, e3 = s.say("demo.3", e2 + 0.9)
+    a4, e4 = s.say("demo.4", e3 + 0.8)
+    mid_ab = ((DOTS[0][0] + DOTS[1][0]) / 2, (DOTS[0][1] + DOTS[1][1]) / 2 + 6)
+    head = ([[0, CENTRE, 0]] + wander(DOTS, 0.0, a1, 2.0, 12) +
+            [[a1 + 0.75 * (e1 - a1), DOTS[0], 1.8],                  # "onto the flute"
+             [e1 + 0.5, mid_ab, 0.9],
+             [a2 + 0.9, DOTS[1], 0.9],                               # "same thing with the violin"
+             [a3 + 1.4, (54.0, 40.0), 1.6],                          # the harp line: a slow approach
+             [e3 - 0.3, DOTS[2], e3 - 0.3 - (a3 + 1.4)]] +
+            wander(DOTS, e3 + 0.3, e4 + 6.0, 2.0, 13, alpha=2.5))    # and the middle, moving
+    return s.at, head, e4 + 6.4
 
 
 def tri_short(vo):
-    head = [[0, CENTRE, 0], [1.7, DOTS[0], 1.1], [3.6, DOTS[1], 1.4], [5.4, DOTS[2], 1.4], [7.0, (50.0, 41.3), 1.2]]
+    head = [[0, (46.0, 38.0), 0]] + wander(DOTS, 0.0, 7.2, 1.25, 14, alpha=1.6)
     return [], head, 7.4
+
+
+# the six instruments from the site, on a hexagon (the stage is 100 x 75; y is drawn at 0.75)
+HEX_DOTS = [(round(50 + 27 * np.cos(-np.pi / 2 + k * np.pi / 3), 2),
+             round((37.5 + 27 * np.sin(-np.pi / 2 + k * np.pi / 3)) / 0.75, 2)) for k in range(6)]
+HEX = {"labels": ["harp", "piano", "flute", "violin", "viola", "oboe"], "selection": [0, 1, 2, 3, 4, 5]}
+
+
+def tri_six(vo):
+    s = Seq(vo)
+    a0, e0 = s.say("six.0", 0.8)
+    a1, e1 = s.say("six.1")
+    dur = e1 + 7.0
+    head = [[0, (50.0, 50.0), 0]] + wander(HEX_DOTS, 0.0, dur - 0.5, 2.0, 15, alpha=0.45)
+    return s.at, head, dur
 
 
 def roll_voice(vo, wishes):
@@ -220,13 +259,14 @@ def plan_long(vo, renders, scenes):
     P = lambda n: os.path.join(renders, "..", "plans", f"{n}.json")
     by_key = {c.KEY: c for c in scenes.ORDER}
     segs = [seg_triangle("cold", vo, tri_cold), seg_manim(by_key["why"], vo, None, None),
-            seg_triangle("demo", vo, tri_demo)]
+            seg_triangle("demo", vo, tri_demo),
+            seg_triangle("six", vo, tri_six, dots=HEX_DOTS, labels=HEX["labels"], selection=HEX["selection"])]
     for k in ("gap", "transform", "split", "align", "average", "synth", "result", "dct", "speed"):
         segs.append(seg_manim(by_key[k], vo, None, None))
     segs.append(seg_roll("pianos_long", P("pianos_long"), R("pianos_long", "json"), R("pianos_long", "wav"),
                          "Satie, Gymnopédie No. 1", "each note is played by the piano at the playhead",
-                         roll_voice(vo, [("pianos.0", 1.0), ("pianos.1", 0), ("pianos.2", 36.6),
-                                         ("pianos.3", 71.2), ("pianos.4", 91.2)])))
+                         roll_voice(vo, [("pianos.0", 1.0), ("pianos.1", 0), ("pianos.2", 27.6),
+                                         ("pianos.3", 54.0), ("pianos.4", 78.0)])))
     segs.append(seg_roll("band_long", P("band_long"), R("band_long", "json"), R("band_long", "wav"),
                          "DOTABATA", "Nena MIDI collection, all sixteen tracks morphed",
                          roll_voice(vo, [("band.0", 0.8), ("band.1", 0), ("band.2", 13.8), ("band.3", 38.5)])))
