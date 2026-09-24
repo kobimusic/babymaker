@@ -31,6 +31,7 @@ VIDEO = os.path.dirname(HERE)
 OUT = os.path.join(VIDEO, "out")
 STORE = os.environ.get("VO_STORE", os.path.join(VIDEO, "voiceover"))
 sys.path.insert(0, VIDEO)
+sys.path.insert(0, HERE)
 import script  # noqa: E402
 
 PORT = int(os.environ.get("PORT", 8773))
@@ -102,69 +103,22 @@ def _moving_average(x, n):
     return (c[hi] - c[lo]) / n
 
 
-def export(cut, offset_ms, duck=0.6):
+def export(cut, offset_ms):
+    """The takes, cleaned and mastered (master.py), under the music, muxed onto the silent cut."""
+    import master
     name = CUTS[cut]["file"]
-    music, sr = sf.read(os.path.join(OUT, f"{name}-music.wav"), dtype="float64", always_2d=True)
-    n = len(music)
-    voice = np.zeros(n)
-    covered = np.zeros(n, bool)
-    xf = int(0.012 * sr)
-    for tk in sorted(takes_index(cut), key=lambda t: t["created"]):     # newer takes win
-        x, tsr = sf.read(os.path.join(take_dir(cut), tk["file"]), dtype="float64", always_2d=True)
-        x = _resample(x.mean(1), tsr, sr)
-        t0 = tk["t0"] + offset_ms / 1000.0
-        a = int(round(max(tk["keepA"], t0) * sr))
-        b = int(round(min(tk["keepB"], t0 + len(x) / sr) * sr))
-        a, b = max(0, a), min(n, b)
-        if b <= a:
-            continue
-        seg = x[a - int(round(t0 * sr)): b - int(round(t0 * sr))]
-        seg = seg[: b - a]
-        if len(seg) < b - a:
-            seg = np.pad(seg, (0, b - a - len(seg)))
-        ramp = np.ones(b - a)
-        k = min(xf, (b - a) // 2)
-        if k:
-            ramp[:k] = np.linspace(0, 1, k)
-            ramp[-k:] = np.linspace(1, 0, k)
-        voice[a:b] = voice[a:b] * (1 - ramp) + seg * ramp
-        covered[a:b] = True
-    if not covered.any():
-        raise ValueError("no takes to export yet")
-    # a gentle high-pass (rumble, handling noise), then the voice to a steady level
-    from scipy.signal import butter, sosfilt
-    voice = sosfilt(butter(2, 70, "hp", fs=sr, output="sos"), voice)
-    act = np.abs(voice) > 1e-4
-    rms = np.sqrt(np.mean(voice[act] ** 2)) if act.any() else 1.0
-    voice *= 0.12 / (rms + 1e-9)
-    env = _moving_average(np.abs(voice), int(0.3 * sr))
-    ref = np.percentile(env[env > 1e-4], 60) if np.any(env > 1e-4) else 1.0
-    gain = 1.0 - duck * np.clip(env / ref, 0, 1)
-    mix = music * gain[:, None] + voice[:, None]
-    peak = np.abs(mix).max()
-    if peak > 0.97:
-        mix *= 0.97 / peak
-    d = os.path.join(STORE, cut)
-    raw = os.path.join(d, "mix.wav")
-    sf.write(raw, mix.astype(np.float32), sr)
-    sf.write(os.path.join(OUT, f"{name}-voice.wav"), voice.astype(np.float32), sr)
-    # two-pass R128 to -16 LUFS, as the videos are
-    r = subprocess.run(["ffmpeg", "-hide_banner", "-i", raw, "-af", "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json",
-                        "-f", "null", "-"], capture_output=True, text=True, check=True)
-    i = r.stderr.rindex("{")
-    m = json.loads(r.stderr[i:r.stderr.index("}", i) + 1])
-    norm = os.path.join(d, "mix.norm.wav")
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", raw, "-af",
-                    f"loudnorm=I=-16:TP=-1.5:LRA=11:measured_I={m['input_i']}:measured_TP={m['input_tp']}:"
-                    f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']}"
-                    ":linear=true", "-ar", str(sr), norm], check=True)
+    v, mix, info = master.master(cut, offset_ms, log=lambda *a: None)
+    sf.write(os.path.join(OUT, f"{name}-voice.wav"), v.astype(np.float32), 44100, subtype="FLOAT")
+    norm = os.path.join(STORE, cut, "mix.wav")
+    sf.write(norm, mix.astype(np.float32), 44100, subtype="FLOAT")
     mp4 = os.path.join(OUT, f"{name}-vo.mp4")
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", os.path.join(OUT, f"{name}-silent.mp4"), "-i", norm,
                     "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
                     "-movflags", "+faststart", "-shortest", mp4], check=True)
     return {"mp4": f"/out/{name}-vo.mp4", "voice": f"/out/{name}-voice.wav",
             "path": mp4, "voice_path": os.path.join(OUT, f"{name}-voice.wav"),
-            "covered_s": round(covered.sum() / sr, 1)}
+            "covered_s": round(float(info["covered48"].sum()) / master.SR, 1),
+            "denoised": info["denoised"]}
 
 
 # ----------------------------------------------------------------------------- http

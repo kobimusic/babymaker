@@ -69,3 +69,19 @@ A small local page for recording over the finished cuts. It shows the script fro
 - **Export** lays the takes on the timeline, ducks the music under the voice, normalises to -16 LUFS and writes `out/<cut>-vo.mp4`, plus `out/<cut>-voice.wav` (the voice alone, full length, for mixing somewhere else).
 
 The video's sound is muted while recording unless "hear the video" is ticked, so the music does not get into the mic (tick it with headphones). "Sync" nudges every take earlier or later if the voice lands a little off.
+
+### Cleaning up the voice
+
+`video/recorder/master.py` is what the recorder's export runs, and it also works on its own:
+
+```bash
+python3 video/recorder/master.py short long --out ~/Downloads   # <cut>-voice-clean.mp3 and <cut>-mix.mp3
+```
+
+It rebuilds the voice from the original takes and takes out each take's DC offset (my laptop mic records one of about +0.10). It raises the level, then runs DeepFilterNet3 noise removal, EQ, a de-esser, 3:1 compression and a limiter, brings it to -16 LUFS, and finishes with a gentle expander. I tuned it with DNSMOS on my takes: overall 3.5 -> 3.9, and the voice itself scored higher, not lower. DeepFilterNet sits in its own folder:
+
+```bash
+python3 -m pip install --target ~/voice-env/site --no-deps deepfilternet==0.5.6 deepfilterlib==0.5.6 appdirs loguru "packaging<24"
+```
+
+(With torchaudio 2.x, `df/io.py` needs its `torchaudio.backend` import made optional.) Without it, the chain still runs, but with no noise removal.
