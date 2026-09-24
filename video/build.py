@@ -41,6 +41,10 @@ DUCK = 0.60                # how far the music dips under the voice (only with -
 READ_WPS = 2.8             # Nathan's reading pace (he talks at ~3.0 words/s), for timing without a voice
 OUTRO = os.path.expanduser("~/ribbon_logo/kobimusic/outro/kobimusic_outro.mp4")
 OUTRO_CUT, OUTRO_FADE = 5.0, 0.8
+# the call to action under the logo: the wordmark finishes drawing at ~2.5 s, and sits in
+# x 442-1472, y 459-647 of the outro's frame
+CTA = [("read the full blog post at ", "soft"), ("kobi.music", "accent")]
+CTA_AT, CTA_IN, CTA_Y, CTA_X = 2.6, 0.6, 742, 957
 LEAD = {"why": 3.6}        # picture before a chapter's first line (the title card)
 LEAD_DEFAULT = 0.6
 
@@ -142,9 +146,30 @@ def seg_roll(name, plan_path, meta_path, wav, title, subtitle, voice, cut=None):
                      "fade_in": 0.35, "fade_out": 0.45}}
 
 
-def seg_clip(name, path, cut, fade, voice=()):
-    """An existing video (the kobimusic outro), cut at `cut` s with a fade to black."""
-    return {"kind": "clip", "name": name, "voice": list(voice), "duration": cut, "src": path, "fade": fade}
+def seg_clip(name, path, cut, fade, voice=(), cta=None):
+    """An existing video (the kobimusic outro), cut at `cut` s with a fade to black, with an
+    optional line of text faded in over it."""
+    return {"kind": "clip", "name": name, "voice": list(voice), "duration": cut, "src": path, "fade": fade,
+            "cta": cta}
+
+
+def cta_png(parts, path, size=46):
+    """The call to action as a transparent 1920x1080 overlay, centred on the logo."""
+    import cairo
+    from frames import SOFT, ACCENT, SERIF
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, 1920, 1080)
+    ctx = cairo.Context(surf)
+    ctx.select_font_face(SERIF, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+    ctx.set_font_size(size)
+    widths = [ctx.text_extents(t).x_advance for t, _ in parts]
+    x = CTA_X - sum(widths) / 2
+    for (t, col), w in zip(parts, widths):
+        ctx.set_source_rgb(*(ACCENT if col == "accent" else SOFT))
+        ctx.move_to(x, CTA_Y)
+        ctx.show_text(t)
+        ctx.new_path()
+        x += w
+    surf.write_to_png(path)
 
 
 def seg_card(name, dur, title, lines, voice=()):
@@ -240,7 +265,7 @@ def plan_short(vo, renders):
                  "DOTABATA", "every track morphed", [], cut=4.4),
         seg_card("speed", 4.8, f"{bench['cuda']['render_s'] * 1000:.0f} ms per note",
                  [("no neural network, only DCTs", "accent"), ("no training, any three recordings", "faint")]),
-        seg_clip("kobimusic", OUTRO, OUTRO_CUT, OUTRO_FADE),
+        seg_clip("kobimusic", OUTRO, OUTRO_CUT, OUTRO_FADE, cta=CTA),
     ]
     # the short's narration runs across segment boundaries, so it is placed on the global clock
     off = np.cumsum([0] + [s["duration"] for s in segs])
@@ -271,7 +296,7 @@ def plan_long(vo, renders, scenes):
                          "DOTABATA", "Nena MIDI collection, all sixteen tracks morphed",
                          roll_voice(vo, [("band.0", 0.8), ("band.1", 0), ("band.2", 13.8), ("band.3", 38.5)])))
     segs.append(seg_manim(by_key["outro"], vo, None, None, ids=["outro.0"]))
-    segs.append(seg_clip("kobimusic", OUTRO, OUTRO_CUT, OUTRO_FADE, voice=[(0.4, "outro.1")]))
+    segs.append(seg_clip("kobimusic", OUTRO, OUTRO_CUT, OUTRO_FADE, voice=[(0.4, "outro.1")], cta=CTA))
     return segs, None
 
 
@@ -303,9 +328,20 @@ def render_segments(segs, out_dir, jobs, quality, only=None):
             print(f"  {name:14s} {s['duration']:6.1f}s (kept)", flush=True)
             return s
         if s["kind"] == "clip":
-            run(["ffmpeg", "-loglevel", "error", "-y", "-i", s["src"], "-t", f"{s['duration']:.3f}",
-                 "-vf", f"fps={FPS},scale=1920:1080,format=yuv420p,fade=t=out:st={s['duration'] - s['fade']:.3f}:d={s['fade']:.3f}",
-                 "-an", "-c:v", "libx264", "-crf", "16", "-preset", "medium", mp4])
+            out_fade = f"fade=t=out:st={s['duration'] - s['fade']:.3f}:d={s['fade']:.3f}"
+            if s.get("cta"):
+                png = os.path.join(out_dir, f"{name}.cta.png")
+                cta_png(s["cta"], png)
+                graph = (f"[0:v]fps={FPS},scale=1920:1080,format=rgba[v];"
+                         f"[1:v]format=rgba,fade=t=in:st={CTA_AT}:d={CTA_IN}:alpha=1[t];"
+                         f"[v][t]overlay=0:0:shortest=1,format=yuv420p,{out_fade}[o]")
+                run(["ffmpeg", "-loglevel", "error", "-y", "-i", s["src"], "-loop", "1", "-framerate", str(FPS),
+                     "-i", png, "-t", f"{s['duration']:.3f}", "-filter_complex", graph, "-map", "[o]",
+                     "-an", "-c:v", "libx264", "-crf", "16", "-preset", "medium", mp4])
+            else:
+                run(["ffmpeg", "-loglevel", "error", "-y", "-i", s["src"], "-t", f"{s['duration']:.3f}",
+                     "-vf", f"fps={FPS},scale=1920:1080,format=yuv420p,{out_fade}",
+                     "-an", "-c:v", "libx264", "-crf", "16", "-preset", "medium", mp4])
             wav = os.path.join(out_dir, f"{name}.wav")
             run(["ffmpeg", "-loglevel", "error", "-y", "-i", s["src"], "-t", f"{s['duration']:.3f}",
                  "-af", f"afade=t=out:st={s['duration'] - s['fade']:.3f}:d={s['fade']:.3f}", "-ar", str(SR), "-ac", "2", wav])
