@@ -53,3 +53,19 @@ python3 video/build.py long --renders video/renders
 - The soundfonts: FluidR3_GM, MS_Basic (Microsoft GS Wavetable), A320U, TBOSf, FB01, OPL4 XI GM set, the Fairlight `piano.sf2` from the Nena pack, and the Mario Kart DS soundfont. The plans expect them in `fonts/` next to `plans/`.
 - The MIDI: Satie's Gymnopédie No. 1 and `16 DOTABATA.MID` from the Nena MIDI collection.
 - The voice reference (a minute of me talking, for the clone).
+
+## Recording the voiceover
+
+```bash
+python3 video/recorder/server.py        # http://localhost:8773
+```
+
+A small local page for recording over the finished cuts. It shows the script from `VOICEOVER.md` as a teleprompter (the line now, the next one with a countdown) and a list of lines to jump to.
+
+- **Record from here** (R) records a pass from wherever the video is.
+- **Record line** (L, or double-click a line) seeks back by the pre-roll, records that one line and stops on its own.
+- A newer take wins wherever it overlaps an older one, so fixing a line is recording it again. Takes play back over the picture.
+- Every take is written to `video/voiceover/<cut>/` as soon as it stops. Deleted takes go to `deleted/` in the same folder.
+- **Export** lays the takes on the timeline, ducks the music under the voice, normalises to -16 LUFS and writes `out/<cut>-vo.mp4`, plus `out/<cut>-voice.wav` (the voice alone, full length, for mixing somewhere else).
+
+The video's sound is muted while recording unless "hear the video" is ticked, so the music does not get into the mic (tick it with headphones). "Sync" nudges every take earlier or later if the voice lands a little off.

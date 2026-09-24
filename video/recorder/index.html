@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Voiceover Recorder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>voiceover</h1>
+    <nav id="cuts" aria-label="video"></nav>
+    <span id="status" class="status"></span>
+  </header>
+
+  <main>
+    <section class="stage">
+      <div class="videoWrap">
+        <video id="video" preload="auto" playsinline></video>
+        <div id="rec" class="recBadge" hidden><span class="dot"></span><span id="recTime">REC</span></div>
+      </div>
+
+      <canvas id="timeline" height="64" aria-label="timeline: lines and takes; click to seek"></canvas>
+
+      <div class="transport">
+        <button id="play" title="play / pause (space)">play</button>
+        <button id="recHere" class="rec" title="record from here (R)">● record from here</button>
+        <button id="recLine" class="rec" title="record the selected line with pre-roll (L)">● record line</button>
+        <button id="stop" title="stop (Esc)" disabled>■ stop</button>
+        <span class="time mono" id="clock">0:00.0</span>
+        <div class="meter" title="mic level"><div id="meter"></div><span id="clip" hidden>clip</span></div>
+      </div>
+
+      <details class="settings" open>
+        <summary>settings</summary>
+        <div class="grid">
+          <label>microphone <select id="mic"><option value="">default</option></select></label>
+          <label class="check"><input type="checkbox" id="hear"> hear the video while recording
+            <span class="hint">(headphones only, or the music gets into the mic)</span></label>
+          <label>pre-roll <input type="range" id="preroll" min="0.5" max="5" step="0.5" value="2"> <span id="prerollV" class="mono">2.0 s</span></label>
+          <label>sync <input type="range" id="offset" min="-250" max="250" step="5" value="0"> <span id="offsetV" class="mono">0 ms</span></label>
+          <label>video volume <input type="range" id="vvol" min="0" max="1" step="0.05" value="0.6"></label>
+          <label>voice volume <input type="range" id="ovol" min="0" max="2" step="0.05" value="1"></label>
+        </div>
+      </details>
+
+      <section class="export">
+        <button id="export" class="primary">export mp4 with the voice</button>
+        <span id="exportOut" class="status"></span>
+      </section>
+
+      <details class="takes" open>
+        <summary>takes <span id="takeCount" class="faint"></span></summary>
+        <ol id="takes"></ol>
+      </details>
+    </section>
+
+    <aside class="script">
+      <div class="prompter" aria-live="polite">
+        <div class="prompterHead"><span id="pState">up next</span><span id="pCount" class="mono"></span></div>
+        <p id="pNow" class="now"></p>
+        <div class="bar"><div id="pBar"></div></div>
+        <p id="pAfter" class="after"></p>
+      </div>
+      <ol id="lines" class="lines"></ol>
+      <p class="keys faint">space play · R record from here · L record line · esc stop · ↑ ↓ lines</p>
+    </aside>
+  </main>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
