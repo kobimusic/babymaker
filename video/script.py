@@ -6,17 +6,17 @@ reads} when the two differ (acronyms, numbers). Line ids are "<section>.<n>".
 
 SHORT = {
     "open": [
-        "So I wanted to take three instruments and make a new one out of them. Not a crossfade, but a note that is part of each.",
-        "The attack, the tone and even the decay would all land in the middle.",
+        "I made a new instrument out of three others. Not a crossfade.",
+        "The attack, the tone and the decay all land in the middle.",
     ],
     "pianos": [
-        "It works on soundfonts too. This is Satie, with the piano morphing between three soundfonts as it plays.",
+        "It works on soundfonts too, like Satie on three pianos.",
     ],
     "band": [
-        "It is also able to do a full arrangement, where each instrument is a baby.",
+        "Or a full arrangement, where each instrument is a baby.",
     ],
-    "end": [
-        "I called it babymaker, and the long video goes over how it works.",
+    "speed": [
+        "No neural network, only DCTs. A new note takes about thirty milliseconds.",
     ],
 }
 
@@ -79,7 +79,24 @@ LONG = {
     ],
     "result": [
         "So three recordings go in, and one instrument comes out. It has one attack, one decay, and a timbre that is not any of the three.",
-        "On my site, it is a TypeScript port running in a web worker. A new morph takes about a hundred milliseconds.",
+        "And it is fast enough to run while you drag the dot around. The reason it is that fast is mostly one transform.",
+    ],
+    "dct": [
+        "Pretty much the whole algorithm is the DCT, and it shows up three times.",
+        "The MDCT that cuts the audio into frames is a DCT. The cepstrum that finds the envelope is a DCT of the log spectrum. And going back to audio is a DCT again.",
+        {"cap": "It is lossless. If I take this flute into the MDCT and straight back out, the worst error is 4 × 10⁻¹⁶, which is basically float rounding.",
+         "say": "It is lossless. If I take this flute into the M D C T and straight back out, the worst error is four times ten to the minus sixteen, which is basically float rounding."},
+        {"cap": "It also packs the shape of a spectrum into very few numbers. The first 20 cepstral coefficients, out of 1024, already hold two thirds of this frame's log spectrum. Those 20 numbers are the envelope, and the rest is the harmonic comb.",
+         "say": "It also packs the shape of a spectrum into very few numbers. The first twenty cepstral coefficients, out of a thousand and twenty four, already hold two thirds of this frame's log spectrum. Those twenty numbers are the envelope, and the rest is the harmonic comb."},
+        {"cap": "And it is cheap. A DCT of 1024 points takes about 4 microseconds, because it runs through an FFT. A four second note is around 700 frames, so it barely costs anything.",
+         "say": "And it is cheap. A DCT of a thousand and twenty four points takes about four microseconds, because it runs through an FFT. A four second note is around seven hundred frames, so it barely costs anything."},
+        "There is also no training. None of this is learned, so it works on any three recordings I give it.",
+    ],
+    "speed": [
+        "So how does that compare? Most of the other ways to morph between instruments are neural networks.",
+        "NSynth, from Google Magenta in 2017, could morph between instruments with a WaveNet autoencoder. One four second note took around eighteen minutes on a GPU.",
+        "GANSynth and RAVE got that to milliseconds. But they have to be trained on a dataset first, and GANSynth cannot take your own samples at all.",
+        "babymaker makes the same four second note in about thirty milliseconds on my GPU, or a fifth of a second on the CPU. That is with no training and no dataset, and it even runs in a browser.",
     ],
     "pianos": [
         "Okay, now the fun part. This is the first Gymnopedie by Satie.",
@@ -98,7 +115,7 @@ LONG = {
     ],
     "outro": [
         "The version on my site skips the optimal transport step, so that is the next thing I want to port.",
-        "The code is on GitHub, with the Python version, the TypeScript port and the demo. Thanks for watching.",
+        "Thanks for watching.",
     ],
 }
 

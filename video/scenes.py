@@ -609,6 +609,172 @@ class S0Why(Chapter):
         self.clear_out(tri, fonts, babies, lab, head)
 
 
+# ----------------------------------------------------------------- 7b. the DCT
+
+BENCH = json.load(open(os.path.join(HERE, "work", "bench.json"))) if os.path.exists(
+    os.path.join(HERE, "work", "bench.json")) else {}
+
+
+def sci(x):
+    e = int(np.floor(np.log10(x)))
+    m = x / 10 ** e
+    sup = str(e).translate(str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹"))
+    return f"{m:.1f} × 10{sup}"
+
+
+class S7bDCT(Chapter):
+    KEY = "dct"
+
+    def construct(self):
+        head = self.chapter_head("", "the DCT")
+
+        # the pipeline, with its three DCTs lit
+        def box(label, sub=None, lit=False):
+            c = chip(label, ACCENT if lit else SOFT)
+            if sub:
+                c.add(note(sub, 16, ACCENT).next_to(c, DOWN, buff=0.12))
+            return c
+        top = [box("audio"), box("MDCT", "DCT-IV", True), box("log |X|"), box("cepstrum", "DCT-II", True),
+               box(f"first {BENCH['cepstrum']['q']}"), box("envelope")]
+        bot = [box("morph"), box("inverse MDCT", "DCT-IV", True), box("audio")]
+        row1 = VGroup(*top).arrange(RIGHT, buff=0.55).move_to(UP * 1.3)
+        row2 = VGroup(*bot).arrange(RIGHT, buff=0.55).move_to(DOWN * 1.2)
+        arrows = VGroup(*[arrow(a[0].get_right(), b[0].get_left()) for a, b in zip(top, top[1:])],
+                        *[arrow(a[0].get_right(), b[0].get_left()) for a, b in zip(bot, bot[1:])])
+        self.play(FadeIn(row1, lag_ratio=0.15), run_time=1.4)
+        self.play(FadeIn(row2, lag_ratio=0.15), FadeIn(arrows), run_time=1.0)
+        self.sync(0, 0.2)
+        for k in (1, 3):
+            self.play(top[k].animate.scale(1.12), run_time=0.35)
+            self.play(top[k].animate.scale(1 / 1.12), run_time=0.35)
+        self.play(bot[1].animate.scale(1.12), run_time=0.35)
+        self.play(bot[1].animate.scale(1 / 1.12), run_time=0.35)
+        self.sync(1, 0.2)
+        self.play(FadeOut(VGroup(row1, row2, arrows)), run_time=0.6)
+
+        # lossless
+        wb = Box(10.4, 2.6, (0, 1), (-1, 1), UP * 0.9)
+        x, r = np.array(BENCH["flute_wave"]), np.array(BENCH["flute_rec"])
+        g = max(np.abs(x).max(), 1e-9)
+        xs = np.linspace(0, 1, len(x))
+        orig = wb.curve(xs, x / g, INK, 1.0)
+        back = wb.curve(xs, r / g, ACCENT, 1.0, 0.9)
+        lab = VGroup(note("flute", 20, INK), note("into the MDCT and back", 20, ACCENT)).arrange(RIGHT, buff=0.6)
+        wb.above_left(lab, 0.25)
+        self.play(Create(orig), FadeIn(lab[0]), run_time=1.2)
+        self.play(Create(back), FadeIn(lab[1]), run_time=1.2)
+        big = VGroup(note("worst error", 22, SOFT), title(sci(BENCH["mdct_roundtrip_max_err"]), 44),
+                     note(f"on a signal that peaks at {BENCH['mdct_signal_peak']:.2f}", 19, FAINT)).arrange(DOWN, buff=0.18)
+        big.move_to(DOWN * 2.0)
+        self.play(FadeIn(big, shift=UP * 0.1), run_time=0.8)
+        self.sync(2, 0.3)
+        self.play(FadeOut(VGroup(orig, back, lab, big)), run_time=0.6)
+
+        # energy compaction
+        cp = BENCH["cepstrum"]
+        q = cp["q"]
+        ca = np.array(cp["abs"])
+        cb = Box(5.2, 3.2, (0, len(ca)), (0, 1), LEFT * 3.6 + DOWN * 0.3)
+        top_c = ca.max()
+        stems = VGroup(*[Line(cb.pt(k + 0.5, 0), cb.pt(k + 0.5, min(1, v / top_c)),
+                              stroke_color=ACCENT if k < q else RULE, stroke_width=2.2 if k < q else 1.6)
+                         for k, v in enumerate(ca)])
+        clab = cb.above_left(caption("cepstrum of one frame", f"the first {q} of {cp['bins']} coefficients"), 0.25)
+        hz = np.array(cp["hz"])
+        sb = Box(5.6, 3.2, (0, hz[-1]), (min(cp["logspec"]) - 0.3, max(cp["logspec"]) + 0.3), RIGHT * 3.3 + DOWN * 0.3)
+        spec = sb.curve(hz, cp["logspec"], INK, 1.2, 0.7)
+        smooth = sb.curve(hz, cp["smooth"], ACCENT, 2.6)
+        slab = sb.above_left(caption("log spectrum", f"rebuilt from those {q}"), 0.25)
+        self.play(FadeIn(cb.frame("coefficient")), FadeIn(clab), Create(stems, lag_ratio=0.01), run_time=1.6)
+        self.play(FadeIn(sb.frame("frequency, Hz")), FadeIn(slab), Create(spec), run_time=1.0)
+        self.play(Create(smooth), run_time=1.0)
+        share = note(f"{q} numbers  ·  {cp['energy_first_q'] * 100:.0f}% of the log spectrum", 24, ACCENT)
+        share.move_to(DOWN * 2.85)
+        self.play(FadeIn(share), run_time=0.6)
+        self.sync(3, 0.3)
+        self.play(FadeOut(VGroup(stems, clab, spec, smooth, slab, share, cb.frame(), sb.frame())), run_time=0.6)
+
+        # cheap
+        us = BENCH["dct1024_us"]
+        fast = VGroup(title(f"{us:.1f} µs", 60), note("one 1024-point DCT, through an FFT", 23, SOFT),
+                      note(f"about {int(round(BENCH['frames_per_note'], -2))} frames in a 4 second note", 21, FAINT))
+        fast.arrange(DOWN, buff=0.3)
+        self.play(FadeIn(fast[0], shift=UP * 0.1), run_time=0.7)
+        self.play(FadeIn(fast[1:]), run_time=0.7)
+        self.sync(4, 0.3)
+        self.play(FadeOut(fast), run_time=0.5)
+
+        # nothing learned
+        none = VGroup(note("nothing learned", 30, INK), note("no dataset", 30, INK),
+                      note("any three recordings", 30, ACCENT)).arrange(DOWN, buff=0.35)
+        self.play(FadeIn(none, lag_ratio=0.3), run_time=1.2)
+        self.sync(5, 0.4)
+        self.clear_out(none, head)
+
+
+# ----------------------------------------------------------------- 7c. how fast
+
+class S7cSpeed(Chapter):
+    KEY = "speed"
+
+    def construct(self):
+        head = self.chapter_head("", "how fast")
+        B = BENCH
+        rows = [  # name, seconds for one 4 s note, where the figure comes from, what it needs
+            ("NSynth, WaveNet autoencoder (2017)", B["neural"][0]["seconds"], "TitanX GPU, published", "trained on NSynth"),
+            ("RAVE (2021)", 4.0 / B["neural"][2]["realtime_x"], "laptop CPU, published", "≥ 3 h of audio per model"),
+            ("GANSynth (2019)", B["neural"][1]["seconds"], "TitanX GPU, published", "cannot take your samples"),
+            ("babymaker, CPU", B["cpu"]["render_s"], "Core Ultra 7, measured", "no training"),
+            ("babymaker, in the browser", B["js"]["render_s"], "TypeScript port, measured", "no training"),
+            ("babymaker, GPU", B["cuda"]["render_s"], "RTX 5060, measured", "no training"),
+        ]
+        lo, hi = np.log10(0.01), np.log10(3000)
+        x0, x1 = -1.9, 3.7
+        X = lambda v: x0 + (np.log10(v) - lo) / (hi - lo) * (x1 - x0)
+        ys = [1.75 - k * 0.72 for k in range(len(rows))]
+        ttl = note("one four-second note, morphed", 26, INK).move_to(UP * 2.75 + LEFT * 2.0)
+        axis = Line(RIGHT * x0 + DOWN * 2.25, RIGHT * x1 + DOWN * 2.25, stroke_color=RULE, stroke_width=1.4)
+        ticks = VGroup()
+        for v, t in ((0.01, "10 ms"), (0.1, "100 ms"), (1, "1 s"), (10, "10 s"), (60, "1 min"), (600, "10 min")):
+            ticks.add(Line(RIGHT * X(v) + DOWN * 2.25, RIGHT * X(v) + UP * 2.2, stroke_color=RULE,
+                           stroke_width=0.8, stroke_opacity=0.6))
+            ticks.add(note(t, 16, FAINT).move_to(RIGHT * X(v) + DOWN * 2.5))
+        alab = note("seconds, log scale", 16, FAINT).next_to(axis, DOWN, buff=0.5)
+        self.play(FadeIn(ttl), Create(axis), FadeIn(ticks), FadeIn(alab), run_time=1.0)
+
+        def row(k):
+            name, v, src, need = rows[k]
+            ours = name.startswith("babymaker")
+            col = ACCENT if ours else SOFT
+            y = ys[k]
+            rule = Line(RIGHT * x0 + UP * y, RIGHT * X(v) + UP * y, stroke_color=col, stroke_width=1.2,
+                        stroke_opacity=0.5)
+            dot = Dot(RIGHT * X(v) + UP * y, radius=0.085, color=col)
+            val = f"{v * 1000:.0f} ms" if v < 1 else (f"{v / 60:.0f} min" if v >= 120 else f"{v:.1f} s")
+            lbl = VGroup(note(name, 19, INK), note(src, 14, FAINT)).arrange(DOWN, buff=0.05, aligned_edge=RIGHT)
+            lbl.next_to(RIGHT * x0 + UP * y, LEFT, buff=0.3)
+            vt = note(val, 18, INK).next_to(dot, UP, buff=0.1)
+            nd = note(need, 16, ACCENT if ours else FAINT).move_to(RIGHT * 5.55 + UP * y)
+            return VGroup(rule, dot, lbl, vt, nd)
+
+        need_head = note("needs", 17, FAINT).move_to(RIGHT * 5.55 + UP * 2.35)
+        self.sync(0, 0.1)
+        r0 = row(0)
+        self.play(FadeIn(need_head), FadeIn(r0), run_time=1.0)
+        self.sync(1, 0.2)
+        r12 = VGroup(row(1), row(2))
+        self.play(FadeIn(r12, lag_ratio=0.4), run_time=1.2)
+        self.sync(2, 0.2)
+        ours = VGroup(row(3), row(4), row(5))
+        self.play(FadeIn(ours, lag_ratio=0.35), run_time=1.5)
+        fine = note("NSynth and GANSynth: Engel et al., GANSynth, ICLR 2019.  RAVE: Caillon and Esling, 2021 "
+                    "(20× real time).  babymaker: this machine, median of 20 renders.", 13, FAINT)
+        fine.to_edge(DOWN, buff=0.18)
+        self.play(FadeIn(fine), run_time=0.6)
+        self.sync(3, 1.2)
+        self.clear_out(ttl, axis, ticks, alab, need_head, r0, r12, ours, fine, head)
+
+
 # ----------------------------------------------------------------- 8. what's next
 
 class S8Outro(Chapter):
@@ -638,15 +804,7 @@ class S8Outro(Chapter):
         self.sync(0, 0.3)
         self.clear_out(ga, gc, gdb, got, l1, l2, ticks, xlab, head, b.frame())
 
-        end = VGroup(title("babymaker", 48),
-                     note("github.com/hidude562/babymaker", 24, ACCENT),
-                     note("python  ·  typescript port  ·  browser demo", 20, FAINT)).arrange(DOWN, buff=0.3)
-        self.play(FadeIn(end, shift=UP * 0.15), run_time=1.0)
-        self.sync(1, 2.2)
-        self.play(FadeOut(end), run_time=0.8)
-
-
-ORDER = [S0Why, S1Gap, S2Transform, S3Split, S4Align, S5Average, S6Synth, S7Result, S8Outro]
+ORDER = [S0Why, S1Gap, S2Transform, S3Split, S4Align, S5Average, S6Synth, S7Result, S7bDCT, S7cSpeed, S8Outro]
 
 import sys  # noqa: E402
 sys.path.insert(0, HERE)

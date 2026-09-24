@@ -37,7 +37,10 @@ GAP = 0.45                 # breath between two narration lines
 VOICE_PEAK = 0.72
 MUSIC_PEAK = 0.62
 SFX_PEAK = 0.30
-DUCK = 0.60                # how far the music dips under the voice
+DUCK = 0.60                # how far the music dips under the voice (only with --voice)
+READ_WPS = 2.8             # Nathan's reading pace (he talks at ~3.0 words/s), for timing without a voice
+OUTRO = os.path.expanduser("~/ribbon_logo/kobimusic/outro/kobimusic_outro.mp4")
+OUTRO_CUT, OUTRO_FADE = 5.0, 0.8
 LEAD = {"why": 3.6}        # picture before a chapter's first line (the title card)
 LEAD_DEFAULT = 0.6
 
@@ -69,12 +72,17 @@ def duration(path):
 class Voice:
     """The narration of one video: every line's clip, levelled, and its caption."""
 
-    def __init__(self, which):
+    def __init__(self, which, use_clips=False):
         sc = script.SHORT if which == "short" else script.LONG
         self.lines = script.lines(sc)
+        self.clip, self.dur = {}, {}
+        if not use_clips:
+            # no narration in the film: time the picture for a live read of the script
+            for k, v in self.lines.items():
+                self.dur[k] = len(v["say"].split()) / READ_WPS + 0.3
+            return
         d = os.path.join(WORK, f"vo_{which}")
         idx = json.load(open(os.path.join(d, "index.json")))
-        self.clip, self.dur = {}, {}
         for k in self.lines:
             x = load(os.path.join(d, f"{k}.wav"))
             x = x / (np.sqrt(np.mean(x ** 2)) + 1e-9) * 0.1          # every line at the same loudness
@@ -101,10 +109,10 @@ class Seq:
 
 # ----------------------------------------------------------------------------- segments
 
-def seg_manim(cls, vo, media, quality):
+def seg_manim(cls, vo, media, quality, ids=None):
     """One explainer chapter; its narration timing is written for the scene to sync to."""
     key = cls.KEY
-    ids = vo.ids(key)
+    ids = ids or vo.ids(key)
     t = LEAD.get(key, LEAD_DEFAULT)
     starts, ends = [], []
     for k in ids:
@@ -132,6 +140,11 @@ def seg_roll(name, plan_path, meta_path, wav, title, subtitle, voice, cut=None):
             "spec": {"kind": "roll", "fps": FPS, "duration": dur, "plan": plan_path, "meta": meta_path,
                      "audio": wav, "title": title, "subtitle": subtitle, "window": 8.0,
                      "fade_in": 0.35, "fade_out": 0.45}}
+
+
+def seg_clip(name, path, cut, fade, voice=()):
+    """An existing video (the kobimusic outro), cut at `cut` s with a fade to black."""
+    return {"kind": "clip", "name": name, "voice": list(voice), "duration": cut, "src": path, "fade": fade}
 
 
 def seg_card(name, dur, title, lines, voice=()):
@@ -163,8 +176,8 @@ def tri_demo(vo):
 
 
 def tri_short(vo):
-    head = [[0, CENTRE, 0], [1.9, DOTS[0], 1.2], [4.0, DOTS[1], 1.5], [6.1, DOTS[2], 1.5], [8.0, (50.0, 41.3), 1.3]]
-    return [], head, 8.8
+    head = [[0, CENTRE, 0], [1.7, DOTS[0], 1.1], [3.6, DOTS[1], 1.4], [5.4, DOTS[2], 1.4], [7.0, (50.0, 41.3), 1.2]]
+    return [], head, 7.4
 
 
 def roll_voice(vo, wishes):
@@ -178,19 +191,18 @@ def roll_voice(vo, wishes):
 def plan_short(vo, renders):
     R = lambda n, ext: os.path.join(renders, f"{n}.{ext}")
     P = lambda n: os.path.join(renders, "..", "plans", f"{n}.json")
+    bench = json.load(open(os.path.join(WORK, "bench.json")))
     segs = [
-        seg_card("title", 2.0, "making soundfont babies", [("babymaker", "accent")]),
+        seg_card("title", 1.8, "making soundfont babies", [("babymaker", "accent")]),
         seg_triangle("tri_short", vo, tri_short),
         seg_roll("pianos_short", P("pianos_short"), R("pianos_short", "json"), R("pianos_short", "wav"),
-                 "Satie, Gymnopédie No. 1", "three pianos from three soundfonts", [], cut=8.4),
+                 "Satie, Gymnopédie No. 1", "three pianos from three soundfonts", [], cut=6.6),
         seg_roll("band_short", P("band_short"), R("band_short", "json"), R("band_short", "wav"),
-                 "DOTABATA", "every track morphed", [], cut=5.6),
+                 "DOTABATA", "every track morphed", [], cut=4.4),
+        seg_card("speed", 4.8, f"{bench['cuda']['render_s'] * 1000:.0f} ms per note",
+                 [("no neural network, only DCTs", "accent"), ("no training, any three recordings", "faint")]),
+        seg_clip("kobimusic", OUTRO, OUTRO_CUT, OUTRO_FADE),
     ]
-    # the end card takes whatever is left of the thirty seconds
-    used = sum(s["duration"] for s in segs)
-    segs.append(seg_card("end", round(30.0 - used, 3), "babymaker",
-                         [("github.com/hidude562/babymaker", "accent"),
-                          ("the long video goes over how it works", "faint")]))
     # the short's narration runs across segment boundaries, so it is placed on the global clock
     off = np.cumsum([0] + [s["duration"] for s in segs])
     g = Seq(vo)
@@ -198,8 +210,8 @@ def plan_short(vo, renders):
     g.say("open.1")
     g.say("pianos.0", off[2] + 0.2)
     g.say("band.0", off[3] + 0.15)
-    _, end = g.say("end.0", off[4] + 0.1)
-    assert end <= 29.9, f"the short's narration runs to {end:.2f}s"
+    _, end = g.say("speed.0", off[4] + 0.1)
+    assert end <= off[5] + 0.3, f"the short's narration runs to {end:.2f}s, into the outro at {off[5]:.2f}s"
     return segs, g.at
 
 
@@ -209,7 +221,7 @@ def plan_long(vo, renders, scenes):
     by_key = {c.KEY: c for c in scenes.ORDER}
     segs = [seg_triangle("cold", vo, tri_cold), seg_manim(by_key["why"], vo, None, None),
             seg_triangle("demo", vo, tri_demo)]
-    for k in ("gap", "transform", "split", "align", "average", "synth", "result"):
+    for k in ("gap", "transform", "split", "align", "average", "synth", "result", "dct", "speed"):
         segs.append(seg_manim(by_key[k], vo, None, None))
     segs.append(seg_roll("pianos_long", P("pianos_long"), R("pianos_long", "json"), R("pianos_long", "wav"),
                          "Satie, Gymnopédie No. 1", "each note is played by the piano at the playhead",
@@ -218,13 +230,14 @@ def plan_long(vo, renders, scenes):
     segs.append(seg_roll("band_long", P("band_long"), R("band_long", "json"), R("band_long", "wav"),
                          "DOTABATA", "Nena MIDI collection, all sixteen tracks morphed",
                          roll_voice(vo, [("band.0", 0.8), ("band.1", 0), ("band.2", 13.8), ("band.3", 38.5)])))
-    segs.append(seg_manim(by_key["outro"], vo, None, None))
+    segs.append(seg_manim(by_key["outro"], vo, None, None, ids=["outro.0"]))
+    segs.append(seg_clip("kobimusic", OUTRO, OUTRO_CUT, OUTRO_FADE, voice=[(0.4, "outro.1")]))
     return segs, None
 
 
 # ----------------------------------------------------------------------------- rendering
 
-def render_segments(segs, out_dir, jobs, quality):
+def render_segments(segs, out_dir, jobs, quality, only=None):
     os.makedirs(out_dir, exist_ok=True)
     narr = {s["key"]: s["narr"] for s in segs if s["kind"] == "manim"}
     narr_path = os.path.join(out_dir, "narration.json")
@@ -236,7 +249,29 @@ def render_segments(segs, out_dir, jobs, quality):
     def one(s):
         name = s.get("cls") or s["name"]
         mp4 = os.path.join(out_dir, f"{name}.mp4")
-        if s["kind"] == "manim":
+        if only is not None and name not in only and os.path.exists(mp4):
+            # reuse the segment rendered last time
+            s["video"] = mp4
+            if s["kind"] == "manim":
+                s["duration"] = duration(mp4)
+                cf = os.path.join(cue_dir, f"{s['key']}.json")
+                s["cues"] = json.load(open(cf)) if os.path.exists(cf) else {}
+            elif s["kind"] == "triangle":
+                s["music"] = os.path.join(out_dir, f"{name}.music.wav")
+            elif s["kind"] == "clip":
+                s["music"], s["music_raw"] = os.path.join(out_dir, f"{name}.wav"), True
+            print(f"  {name:14s} {s['duration']:6.1f}s (kept)", flush=True)
+            return s
+        if s["kind"] == "clip":
+            run(["ffmpeg", "-loglevel", "error", "-y", "-i", s["src"], "-t", f"{s['duration']:.3f}",
+                 "-vf", f"fps={FPS},scale=1920:1080,format=yuv420p,fade=t=out:st={s['duration'] - s['fade']:.3f}:d={s['fade']:.3f}",
+                 "-an", "-c:v", "libx264", "-crf", "16", "-preset", "medium", mp4])
+            wav = os.path.join(out_dir, f"{name}.wav")
+            run(["ffmpeg", "-loglevel", "error", "-y", "-i", s["src"], "-t", f"{s['duration']:.3f}",
+                 "-af", f"afade=t=out:st={s['duration'] - s['fade']:.3f}:d={s['fade']:.3f}", "-ar", str(SR), "-ac", "2", wav])
+            s["music"] = wav
+            s["music_raw"] = True
+        elif s["kind"] == "manim":
             env = dict(os.environ, EXPLAINER_NARR=narr_path, EXPLAINER_CUES=cue_dir)
             run([sys.executable, "-m", "manim", "-q", quality, "--fps", str(FPS), "-r", "1920,1080",
                  "--format=mp4", "--media_dir", media, os.path.join(HERE, "scenes.py"), s["cls"]],
@@ -276,7 +311,7 @@ def moving_average(x, n):
     return (c[hi] - c[lo]) / n
 
 
-def mix(segs, vo, global_voice, out_wav):
+def mix(segs, vo, global_voice, out_wav, with_voice):
     total = sum(s["duration"] for s in segs)
     n = int((total + 1) * SR)
     voice, music, sfx = np.zeros(n), np.zeros((n, 2)), np.zeros(n)
@@ -293,7 +328,8 @@ def mix(segs, vo, global_voice, out_wav):
     for s in segs:
         dur = s["duration"]
         for lt, k in s.get("voice", []):
-            put(voice, vo.clip[k], t0 + lt)
+            if with_voice:
+                put(voice, vo.clip[k], t0 + lt)
             placed.append((t0 + lt, k))
         for name, ct in s.get("cues", {}).items():
             if name in notes:
@@ -302,21 +338,23 @@ def mix(segs, vo, global_voice, out_wav):
             m = load(s["music"])
             m = m if m.ndim == 2 else np.stack([m, m], 1)
             m = m[: int(dur * SR)]
-            m = m / (np.abs(m).max() + 1e-9) * MUSIC_PEAK
-            fi, fo = int(0.05 * SR), int(0.45 * SR)
-            m[:fi] *= np.linspace(0, 1, fi)[:, None]
-            m[-fo:] *= np.linspace(1, 0, fo)[:, None]
+            if not s.get("music_raw"):
+                m = m / (np.abs(m).max() + 1e-9) * MUSIC_PEAK
+                fi, fo = int(0.05 * SR), int(0.45 * SR)
+                m[:fi] *= np.linspace(0, 1, fi)[:, None]
+                m[-fo:] *= np.linspace(1, 0, fo)[:, None]
             put(music, m, t0)
         t0 += dur
     for t, k in global_voice or []:
-        put(voice, vo.clip[k], t)
+        if with_voice:
+            put(voice, vo.clip[k], t)
         placed.append((t, k))
 
     voice *= VOICE_PEAK / (np.abs(voice).max() + 1e-9)
     sfx *= SFX_PEAK / (np.abs(sfx).max() + 1e-9)
     env = moving_average(np.abs(voice), int(0.3 * SR))
     ref = np.percentile(env[env > 1e-4], 60) if np.any(env > 1e-4) else 1.0
-    duck = 1.0 - DUCK * np.clip(env / ref, 0, 1)
+    duck = 1.0 - DUCK * np.clip(env / ref, 0, 1) if with_voice else np.ones(len(voice))
     out = music * duck[:, None] + (voice + sfx)[:, None]
     peak = np.abs(out).max()
     if peak > 0.97:
@@ -423,6 +461,31 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 # ----------------------------------------------------------------------------- main
 
+def write_cue_sheet(placed, vo, segs, which, total):
+    """The script with the time each line lands at, for recording a voiceover to the film."""
+    path = os.path.join(HERE, "VOICEOVER.md")
+    sections = {}
+    if os.path.exists(path):
+        txt = open(path).read()
+        for part in txt.split("\n## ")[1:]:
+            sections[part.split("\n", 1)[0]] = "## " + part.rstrip() + "\n"
+    title = "Short (30 s)" if which == "short" else "Long (explained)"
+    starts = np.cumsum([0] + [s["duration"] for s in segs])
+    seg_at = lambda t: next((s.get("cls") or s["name"]) for s, a, b in zip(segs, starts, starts[1:]) if a <= t < b)
+    rows = [f"## {title}", "",
+            f"`babymaker-{'short' if which == 'short' else 'explained'}.mp4`, {total:.1f} s. The picture is timed for a "
+            f"read at about {READ_WPS} words a second, so each line has room. Times are where each line starts.", "",
+            "| time | on screen | line |", "|---|---|---|"]
+    for t, k in placed:
+        rows.append(f"| {int(t // 60)}:{t % 60:04.1f} | {seg_at(t)} | {vo.lines[k]['cap']} |")
+    sections[title] = "\n".join(rows) + "\n"
+    head = ("# Voiceover script\n\nWritten by build.py from video/script.py. The videos have no narration, only the "
+            "music and the instrument sounds (plus silent copies), so this is the script to record over them. "
+            "The captions in `out/*.srt` follow the same timing.\n\n")
+    order = ["Short (30 s)", "Long (explained)"]
+    open(path, "w").write(head + "\n".join(sections[k] for k in order if k in sections))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("which", choices=["short", "long"])
@@ -430,10 +493,12 @@ def main():
     ap.add_argument("--out", default=os.path.join(HERE, "out"))
     ap.add_argument("--jobs", type=int, default=8)
     ap.add_argument("--quality", default="h", choices=["l", "m", "h"])
-    ap.add_argument("--burn", action="store_true", help="burn the captions in (default for the short)")
+    ap.add_argument("--voice", action="store_true", help="lay the TTS narration in (video/work/vo_*)")
+    ap.add_argument("--burn", action="store_true", help="burn the captions in")
+    ap.add_argument("--only", default=None, help="re-render only these segments (comma-separated names), keep the rest")
     a = ap.parse_args()
 
-    vo = Voice(a.which)
+    vo = Voice(a.which, use_clips=a.voice)
     work = os.path.join(WORK, f"build_{a.which}")
     if a.which == "short":
         segs, gvoice = plan_short(vo, a.renders)
@@ -446,28 +511,37 @@ def main():
         segs, gvoice = plan_long(vo, a.renders, scenes)
 
     print(f"rendering {len(segs)} segments…", flush=True)
-    segs = render_segments(segs, work, a.jobs, a.quality)
+    segs = render_segments(segs, work, a.jobs, a.quality, a.only.split(",") if a.only else None)
 
     print("mixing…", flush=True)
     wav = os.path.join(work, "mix.wav")
-    placed, total = mix(segs, vo, gvoice, wav)
+    placed, total = mix(segs, vo, gvoice, wav, a.voice)
     wav = loudnorm(wav)
 
     os.makedirs(a.out, exist_ok=True)
     name = "babymaker-short" if a.which == "short" else "babymaker-explained"
     base = os.path.join(a.out, name)
     write_captions(placed, vo, base)
+    write_cue_sheet(sorted(placed), vo, segs, a.which, total)
 
     listing = os.path.join(work, "parts.txt")
     open(listing, "w").write("".join(f"file '{s['video']}'\n" for s in segs))
     vf = ["fps=30", "format=yuv420p"]
-    if a.burn or a.which == "short":
+    if a.burn:
         vf.insert(0, f"subtitles={base}.ass")
-    run(["ffmpeg", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", listing, "-i", wav,
-         "-vf", ",".join(vf), "-c:v", "libx264", "-preset", "slow", "-crf", "18",
+    silent = os.path.join(work, "picture.mp4")
+    run(["ffmpeg", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", listing,
+         "-vf", ",".join(vf), "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-an",
+         "-movflags", "+faststart", "-t", f"{total:.3f}", silent])
+    run(["ffmpeg", "-loglevel", "error", "-y", "-i", silent, "-i", wav, "-c:v", "copy",
          "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-t", f"{total:.3f}", base + ".mp4"])
+    os.replace(silent, base + "-silent.mp4")
+    run(["ffmpeg", "-loglevel", "error", "-y", "-i", wav, "-c:a", "pcm_s16le", base + "-music.wav"])
     run(["ffmpeg", "-loglevel", "error", "-y", "-ss", "3", "-i", base + ".mp4", "-frames:v", "1", base + "-poster.png"])
-    print(f"\nwrote {base}.mp4  {duration(base + '.mp4'):.1f}s  (+ .srt)")
+    for f in (base + ".ass",):
+        if os.path.exists(f) and not a.burn:
+            os.remove(f)
+    print(f"\nwrote {base}.mp4  {duration(base + '.mp4'):.1f}s  (+ -silent.mp4, -music.wav, .srt, VOICEOVER.md)")
     t = 0.0
     for s in segs:
         print(f"  {t:6.1f}  {(s.get('cls') or s['name']):14s} {s['duration']:5.1f}s")

@@ -2,7 +2,9 @@
 
 The two videos about babymaker. One is a 30 second short. The other is a longer cut that goes over how the algorithm works, with the demos in between.
 
-Everything in them is real output. The triangle demo's audio comes from the TypeScript morph in `web/lib`. The Satie and DOTABATA clips are rendered with `babymaker.arrange`. The explainer's curves and matrices come from `explainer_data.py`, which runs the Python morph on the demo's three instruments. The narration is my voice, cloned with Qwen3-TTS from a minute of me talking.
+Everything in them is real output. The triangle demo's audio comes from the TypeScript morph in `web/lib`. The Satie and DOTABATA clips are rendered with `babymaker.arrange`. The explainer's curves and matrices come from `explainer_data.py`, which runs the Python morph on the demo's three instruments. The speed and DCT numbers come from `bench.py`.
+
+The videos have no narration by default. I record the voiceover myself from `VOICEOVER.md`, which `build.py` writes with the time each line lands at (the picture is timed for a read at about 2.8 words a second). `--voice` lays in the cloned TTS narration instead. Both cuts end on the kobimusic outro, cut at 5 s with a fade to black.
 
 ## Files
 
@@ -14,7 +16,9 @@ Everything in them is real output. The triangle demo's audio comes from the Type
 | `scenes.py` | the manim chapters (why, the seven parts of the algorithm, what is next) |
 | `frames.py` | the demo scenes (the triangle, the piano roll, the cards), drawn with cairo and piped into ffmpeg |
 | `demo_audio.mjs` | sequences Alla Turca through the TypeScript morph along the triangle's timeline |
-| `build.py` | lays out the segments, places the narration, ducks the music, writes captions and encodes |
+| `bench.py` | times the morph on CPU, GPU and in the TypeScript port, and measures the DCT facts the video quotes |
+| `build.py` | lays out the segments, times them to the script, mixes the music and encodes. Writes `VOICEOVER.md` |
+| `VOICEOVER.md` | the script to record, with a timecode per line |
 
 ## Run
 
@@ -26,8 +30,9 @@ python3 -c "import json, sys; sys.path.insert(0, 'video'); import script; [json.
 CUDA_VISIBLE_DEVICES=1 python3 video/tts.py video/work/say_short.json video/work/vo_short
 CUDA_VISIBLE_DEVICES=1 python3 video/tts.py video/work/say_long.json video/work/vo_long
 
-# 2. the explainer's data
+# 2. the explainer's data, and the benchmark
 python3 video/explainer_data.py
+CUDA_VISIBLE_DEVICES=1 python3 video/bench.py
 
 # 3. the MIDI renders (plans in video/plans/, paths are relative to the plan)
 for p in pianos_short band_short pianos_long band_long; do
@@ -39,7 +44,7 @@ python3 video/build.py short --renders video/renders
 python3 video/build.py long --renders video/renders
 ```
 
-`build.py` writes `video/out/babymaker-short.mp4` and `babymaker-explained.mp4`, each with an `.srt`. The short has its captions burned in.
+`build.py` writes `video/out/babymaker-short.mp4` and `babymaker-explained.mp4` (music and instrument sounds, no voice), a `-silent.mp4` copy with no audio, the `-music.wav` stem for mixing under a voiceover, and an `.srt` of the script. `--only S7cSpeed,demo` re-renders just those segments and keeps the rest.
 
 ## Inputs that are not in the repo
 
