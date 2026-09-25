@@ -2,7 +2,6 @@
 
 <p align="center">
   <img src="docs/img/satie.gif" width="900" alt="Satie's first Gymnopédie on eight pianos arranged on an octagon, a playhead wandering between them beside a scrolling piano roll">
-  <br><sub>Satie's first Gymnopédie with eight soundfont pianos on an octagon: each note is rebuilt at wherever the playhead is when it starts.</sub>
 </p>
 
 Take the same note from N instruments and make the sound in between them.
@@ -12,7 +11,6 @@ three a triangle, N an (N-1)-simplex.
 
 <p align="center">
   <img src="docs/img/result.png" width="480" alt="Flute, violin and harp waveforms above the single morphed waveform">
-  <br><sub>45% flute, 35% violin, 20% harp: one attack, one decay, and a timbre that is none of the three.</sub>
 </p>
 
 It was built for a synthetic-data pipeline that renders MIDI through sample
@@ -23,12 +21,9 @@ without recording anything.
 
 <p align="center">
   <img src="docs/img/why.png" width="620" alt="A triangle between three soundfonts filled with random points">
-  <br><sub>Three soundfonts on a triangle. Every point inside it is an instrument none of them has.</sub>
 </p>
 
-The figures here are frames of the explainer video (`video/`). The post on
-kobi.music has the video, and the demo running in the page:
-**[making soundfont babies](https://kobi.music/research/making-soundfont-babies)**.
+There is a blog post with the demo and a video on how it works [here](https://kobi.music/research/making-soundfont-babies).
 
 This repo has three parts:
 
@@ -55,7 +50,6 @@ gets shorter, because the decay is interpolated too.
 
 <p align="center">
   <img src="docs/img/triangle.gif" width="480" alt="Flute, violin and harp on three dots with a pink playhead moving between them">
-  <br><sub>The demo's triangle while Alla Turca plays. The percentages are the weights the next note is rebuilt at.</sub>
 </p>
 
 The six sources are analysed once, in a Web Worker, on load (about 1.5 s on a
@@ -116,7 +110,6 @@ videos (`video/`) come from these plans.
 
 <p align="center">
   <img src="docs/img/dotabata.gif" width="900" alt="DOTABATA's sixteen tracks in a piano roll beside a triangle of three soundfonts">
-  <br><sub>DOTABATA (Nena MIDI collection), all sixteen tracks morphed between FluidR3, the Microsoft GS Wavetable and a Yamaha FB-01. The Satie at the top is the other plan.</sub>
 </p>
 
 ## How it works
@@ -139,7 +132,6 @@ four lattices.  Synthesis writes back only the real (MDCT) part.
 
 <p align="center">
   <img src="docs/img/mclt.png" width="620" alt="A flute note's waveform with the MCLT's cosine and sine sums below it">
-  <br><sub>A flute note into the MCLT, at the browser's hop of M/2: a cosine and a sine sum, so each bin has a magnitude and a phase.</sub>
 </p>
 
 **Analysis** (`morph.py`, `Morpher._analyse`).  Every frame is split into
@@ -153,12 +145,10 @@ four lattices.  Synthesis writes back only the real (MDCT) part.
 
 <p align="center">
   <img src="docs/img/envelope.gif" width="720" alt="A log spectrum with a smoothed curve climbing iteration by iteration until it rests on the harmonic peaks">
-  <br><sub>The true envelope. One cepstral smoothing runs through the harmonics; each iteration takes the max of it and the spectrum and smooths again, until it rides on the peaks.</sub>
 </p>
 
 <p align="center">
   <img src="docs/img/ot.png" width="620" alt="Two peaks at 500 Hz and 1 kHz; their dB average is two half-height bumps, their optimal-transport barycentre one peak at 700 Hz">
-  <br><sub>The formant band. A dB average of a 500 Hz and a 1 kHz peak is two half-height bumps; the Wasserstein barycentre is one peak, moved to 700 Hz.</sub>
 </p>
 
 **Time** — sources are aligned to source 0 by DTW on (level, low-order cepstrum);
@@ -170,7 +160,6 @@ attack is never stretched or repeated.
 
 <p align="center">
   <img src="docs/img/dtw.png" width="760" alt="The DTW cost matrix between the flute and the violin with its cheapest path, and the resulting frame map">
-  <br><sub>The DTW cost between the flute and the violin, the cheapest path through it, and the smoothed map the violin is warped along.</sub>
 </p>
 
 **Synthesis** (`synth="mix"`, default).  The magnitude model above says *what*
@@ -188,7 +177,6 @@ construction (mean instantaneous frequency, peak-locked lobes) for comparison.
 
 <p align="center">
   <img src="docs/img/resynth.png" width="480" alt="A loop: coherent mix, take its phase, morphed magnitudes onto that phase, inverse MCLT, MCLT again">
-  <br><sub>The end of the synthesis: the phase of a coherent mix, the model's magnitudes, and Griffin-Lim (four rounds in Python, two in the browser).</sub>
 </p>
 
 Identity weights (`[1,0,0]`) reproduce the source exactly (waveform correlation 1.000); a source morphed with a 7 ms shifted copy of itself comes back at 0.985; the level, duration and per-harmonic balance of a midpoint sit
@@ -273,7 +261,6 @@ Measured on a 3-source C4 morph (3.5 s sources, 44.1 kHz):
 
 <p align="center">
   <img src="docs/img/speed.png" width="760" alt="A log-scale chart of the time to morph one four-second note: NSynth 18 min, RAVE 200 ms, GANSynth 20 ms, babymaker 205 ms on the CPU, 144 ms in the browser, 31 ms on the GPU">
-  <br><sub>One four-second note, morphed: babymaker's render once the sources are analysed, measured by <code>video/bench.py</code>, against the published neural numbers.</sub>
 </p>
 
 **GPU backend** (`gpu.py`, used automatically when torch sees a CUDA device;

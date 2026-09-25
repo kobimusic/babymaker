@@ -20,7 +20,7 @@ The videos have no narration by default. I record the voiceover myself from `VOI
 | `bench.py` | times the morph on CPU, GPU and in the TypeScript port, and measures the DCT facts the video quotes |
 | `build.py` | lays out the segments, times them to the script, mixes the music and encodes. Writes `VOICEOVER.md` |
 | `VOICEOVER.md` | the script to record, with a timecode per line |
-| `readme_figures.sh` | cuts the top-level README's figures and GIFs (`docs/img/`) out of the long cut |
+| `readme_figures.sh` | makes the pictures in the main README from the long cut |
 
 ## Run
 
