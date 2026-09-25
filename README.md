@@ -1,309 +1,152 @@
 # babymaker
 
 <p align="center">
-  <img src="docs/img/satie.gif" width="900" alt="Satie's first Gymnopédie on eight pianos arranged on an octagon, a playhead wandering between them beside a scrolling piano roll">
+  <img src="docs/img/satie.gif" width="900" alt="Satie on eight pianos">
 </p>
 
-Take the same note from N instruments and make the sound in between them.
-Not a crossfade: the attack, the formants, the harmonics and the decay of the
-new note each sit somewhere between its parents. Two sources give a slider,
-three a triangle, N an (N-1)-simplex.
+It takes the same note from a few instruments and makes a new instrument from them. It is not a crossfade. For instance, the attack, the tone and the decay of the new note could each be part flute, part violin and part harp. With three sources the playhead moves around a triangle, and with more it moves around a bigger shape.
 
 <p align="center">
-  <img src="docs/img/result.png" width="480" alt="Flute, violin and harp waveforms above the single morphed waveform">
+  <img src="docs/img/result.png" width="480" alt="a flute, violin and harp morphed into one note">
 </p>
 
-It was built for a synthetic-data pipeline that renders MIDI through sample
-libraries to train transcription models. There are only so many distinct
-instruments to render with, so a model can learn those exact sounds instead of
-the instrument in general. Morphing between them gives many more timbres
-without recording anything.
+I made it for training data. My transcription models learn from MIDI rendered through soundfonts, and there are only so many soundfonts. I think a model could end up learning those exact pianos instead of what a piano sounds like in general. Mixing them gives way more timbres without recording anything.
 
 <p align="center">
-  <img src="docs/img/why.png" width="620" alt="A triangle between three soundfonts filled with random points">
+  <img src="docs/img/why.png" width="620" alt="random points in a triangle of soundfonts">
 </p>
 
-There is a blog post with the demo and a video on how it works [here](https://kobi.music/research/making-soundfont-babies).
+There is a blog post with the demo and a video explaining it [here](https://kobi.music/research/making-soundfont-babies).
 
-This repo has three parts:
+## Parts
 
-| | |
-|---|---|
-| `babymaker/` | the Python library and CLI (numpy, with optional numba and a torch/CUDA backend) |
-| `web/lib/babymaker/` | a line-for-line TypeScript port of the `synth="mix"`, `env_mode="log"` path |
-| `web/` | the browser demo: six Sonatina Symphonic Orchestra instruments, three on a triangle, Alla Turca playing through whatever point you drag to |
+- `babymaker/` is the Python library and CLI
+- `web/lib/babymaker/` is the TypeScript version that the demo runs
+- `web/` is the browser demo
+- `video/` makes the videos (see `video/README.md`)
 
-## The demo
+## Demo
 
 ```bash
 cd web
 npm install
-npm run dev          # http://localhost:5173
-npm run build        # static site in web/dist/ (relative paths, host it anywhere)
+npm run dev
 ```
 
-Click the stage to load the instruments. The pink dot is the playhead;
-wherever you drag it, the note Mozart is playing is rebuilt from the three
-instruments at the weights shown. Click a dot to swap its instrument, drag the
-dots to move them. Put a harp or piano on a dot and move toward it: the note
-gets shorter, because the decay is interpolated too.
+Click the stage to load the instruments, then drag the pink dot around while Alla Turca plays. Click a dot to swap its instrument. `npm run build` makes a static site in `web/dist/`.
 
 <p align="center">
-  <img src="docs/img/triangle.gif" width="480" alt="Flute, violin and harp on three dots with a pink playhead moving between them">
+  <img src="docs/img/triangle.gif" width="480" alt="the demo">
 </p>
 
-The six sources are analysed once, in a Web Worker, on load (about 1.5 s on a
-desktop). After that each drag is one render (about 80-130 ms). Notes already
-playing keep their sample; new notes get the new one.
+The six instruments are from the Sonatina Symphonic Orchestra. `tools/prep-babies.py` rebuilds them from the SSO samples.
 
 ## Python
 
 ```bash
-pip install -e ".[fast]"          # numba kernels; add [gpu] for torch/CUDA
-./render/build.sh                 # only needed for .sf2 sources (TinySoundFont, gcc)
-
-# 50/50 between two pianos at C4
-python3 -m babymaker render --src /usr/share/sounds/sf2/FluidR3_GM.sf2:0:0 \
-    --src ~/Downloads/A320U.sf2:0:0 --key 60 --weights 0.5,0.5 --out baby.wav
-
-# every point of a 3-source triangle (steps=3 -> 10 points), at two keys, plus the
-# prepared sources; index.json / key060_morph.json describe everything
-python3 -m babymaker grid --src FluidR3_GM.sf2:0:0 --src A320U.sf2:0:0 \
-    --src TimGM6mb.sf2:0:48 --key 60 72 --steps 3 --sources-too -v --out out/morphs
-
-# 20 Dirichlet-random weight vectors (alpha < 1 favours the corners)
-python3 -m babymaker random --src ... --n 20 --seed 0 --alpha 0.7 --out out/morphs
-
-python3 -m babymaker sources --src ... --out out/src     # dump the aligned sources
-python3 -m babymaker list some.sf2                       # bank preset name
+pip install -e ".[fast]"
 ```
 
-Source spec: `font.sf2:bank:preset`, `font.sf2:preset` (bank 0), `sound.wav`,
-`sound.wav:note` (the note the recording is at, `60` or `C4`; default `--key`).
-`--hold` / `--tail` set how long an sf2 note is held and how much release is
-rendered; `--set key=value` overrides any `MorphConfig` field. The `render/`
-renderer is only built (automatically, on first use) when a source is an .sf2.
+Add `[gpu]` for the torch/CUDA backend. A 50/50 morph of the FluidR3 and A320U pianos at C4:
+
+```bash
+python3 -m babymaker render --src FluidR3_GM.sf2:0:0 --src A320U.sf2:0:0 \
+    --key 60 --weights 0.5,0.5 --out baby.wav
+```
+
+A source is `font.sf2:bank:preset` or a `.wav` file. `grid` renders every point of a triangle and `random` renders random weights. `--set key=value` changes any field of `MorphConfig`. The soundfont renderer in `render/` builds itself the first time it is needed.
 
 ```python
 from babymaker import Morpher, MorphConfig, load_source
 srcs = [load_source(s, 44100, key=60) for s in ("A.sf2:0:0", "B.sf2:0:0", "C.wav:C4")]
-mp = Morpher(srcs, MorphConfig(sr=44100))     # analysis once
-y = mp.render([0.2, 0.3, 0.5])                # float64 mono, any weights
+mp = Morpher(srcs, MorphConfig(sr=44100))   # the analysis happens once
+y = mp.render([0.2, 0.3, 0.5])              # then any weights are cheap
 ```
 
-## Playing a MIDI file through morphed soundfonts
+## Playing a MIDI File
 
-`babymaker/arrange.py` plays a whole MIDI file where each instrument is a baby of several
-soundfonts, and the weights can move while it plays. Each note is played by the morph at
-the weights in effect when it starts, the same way the browser demo does it. Each track
-morphs its own program across the fonts (or a fixed preset from the plan), and the sampler
-handles velocity, volume and expression, pan, the sustain pedal, the pitch wheel and a
-light reverb.
+`babymaker/arrange.py` plays a whole MIDI file where each instrument is a baby of a few soundfonts. The weights can move while it plays. A plan file names the MIDI, the fonts and the path the playhead takes (the format is at the top of `arrange.py`).
 
 ```bash
-python3 -m babymaker.arrange video/plans/pianos_long.json    # needs pretty_midi
+python3 -m babymaker.arrange video/plans/pianos_long.json
 ```
 
-A plan names the MIDI file, the fonts, and a path of `[seconds, {font: weight}]`
-keyframes. See the docstring at the top of `arrange.py`. The Satie and DOTABATA clips in the
-videos (`video/`) come from these plans.
-
 <p align="center">
-  <img src="docs/img/dotabata.gif" width="900" alt="DOTABATA's sixteen tracks in a piano roll beside a triangle of three soundfonts">
+  <img src="docs/img/dotabata.gif" width="900" alt="DOTABATA through three soundfonts">
 </p>
 
-## How it works
+## How It Works
 
-**Sources** (`sources.py`).  sf2 notes are rendered through the bundled
-TinySoundFont renderer (`render/tsfrender`), so envelopes, filters, loops and
-layered zones are exactly what a SoundFont player would play.  Each source is then
-made mono, resampled to the target pitch (nominal note + measured fine error:
-the lowest strong partial in a long FFT, so pianos are not read sharp by their
-stretched partials), trimmed of leading/trailing silence and normalised to a
-peak short-time RMS of 1 (the original level is kept and restored, dB-interpolated,
-on output).
+Each note gets broken down by its level, its envelope, its fine structure and its timing. I average each of those differently, then build the new note from them.
 
-**Transform** (`lapped.py`).  The MDCT (a lapped DCT-IV, sine window, M = 1024
-bins, 2048-sample window; 2048 bins below A2) and its MDST sibling form the
-MCLT, giving a magnitude and a phase per bin per frame.  Frames are taken every
-M/4 samples (5.8 ms): the four interleaved hop-M lattices each satisfy TDAC, so
-overlap-add / 4 reconstructs exactly, and modified coefficients are averaged over
-four lattices.  Synthesis writes back only the real (MDCT) part.
+**Transform.** The audio is cut in overlapping frames. Each frame goes through the MCLT (an MDCT and an MDST), so each bin has a magnitude and a phase. It can rebuild the original signal exactly.
 
 <p align="center">
-  <img src="docs/img/mclt.png" width="620" alt="A flute note's waveform with the MCLT's cosine and sine sums below it">
+  <img src="docs/img/mclt.png" width="620" alt="the MCLT">
 </p>
 
-**Analysis** (`morph.py`, `Morpher._analyse`).  Every frame is split into
-
-| part | what | how it is morphed |
-|------|------|-------------------|
-| level | frame RMS in dB | w-average in dB (decay rates interpolate) |
-| envelope | DCT-cepstral *true envelope* (Röbel & Rodet) of the unit-RMS spectrum; cutoff q = 0.3·sr/f0, below the harmonic ripple | split by cepstral order: tilt (< 3) and per-harmonic detail (≥ 0.1·sr/f0) w-averaged in dB; the broad formant band in between treated as a distribution over log-frequency and combined as a 1-D **optimal-transport (Wasserstein) barycentre** (smoothed over 80 ms) — a peak at 500 Hz in A and 1 kHz in B lands near 700 Hz at w = ½ instead of becoming two half-height bumps (`env_mode=log` gives plain dB interpolation) |
-| fine structure | spectrum / envelope: the harmonic comb and noise detail | w-average of \|a\|^0.6 (loudness-like; `fine_gamma=0` for dB) — pitch is common, so bins line up |
-| phase | not modelled: taken from a real signal (below) | — |
+**Analysis.** The level is how loud the frame is in dB. The envelope is the smooth curve the harmonics sit on. I find it with iterated cepstral smoothing (the true envelope from Röbel and Rodet). The fine structure is what is left, which is the harmonics and the noise between them.
 
 <p align="center">
-  <img src="docs/img/envelope.gif" width="720" alt="A log spectrum with a smoothed curve climbing iteration by iteration until it rests on the harmonic peaks">
+  <img src="docs/img/envelope.gif" width="720" alt="the envelope climbing onto the peaks">
 </p>
+
+**Align.** The notes are not the same length, so each source is warped onto the first source with DTW. The warp is smoothed so it never jumps, and it leaves the attack alone.
 
 <p align="center">
-  <img src="docs/img/ot.png" width="620" alt="Two peaks at 500 Hz and 1 kHz; their dB average is two half-height bumps, their optimal-transport barycentre one peak at 700 Hz">
+  <img src="docs/img/dtw.png" width="760" alt="the DTW path">
 </p>
 
-**Time** — sources are aligned to source 0 by DTW on (level, low-order cepstrum);
-the maps are anchored at the onset and Gaussian-smoothed (80 ms) so the warp
-rate never jumps.  The output timeline is the w-average of the aligned
-timelines (a 2 s decay and a 4 s sustain morph into 3 s); each source's warp
-slope is clamped to [1/2.5, 2.5] and to exactly 1 for the first 100 ms, so an
-attack is never stretched or repeated.
+**Average.** The level is averaged in dB, so the decay rates get averaged too. The fine structure is averaged as amplitude to the power of 0.6. In Python, the formant part of the envelope uses optimal transport. A peak at 500 Hz and a peak at 1 kHz meet at 700 Hz instead of turning into two half-height bumps.
 
 <p align="center">
-  <img src="docs/img/dtw.png" width="760" alt="The DTW cost matrix between the flute and the violin with its cheapest path, and the resulting frame map">
+  <img src="docs/img/ot.png" width="620" alt="optimal transport vs a dB average">
 </p>
 
-**Synthesis** (`synth="mix"`, default).  The magnitude model above says *what*
-the morph should sound like; the waveform is built from real signal, not from
-constructed phases: every source is warped onto the output timeline in the
-time domain (WSOLA: 1024-sample Hann blocks re-picked within ±1.5 periods for
-waveform continuity — ratio 1 is an exact copy), the warped sources are summed
-with the weights, and the mix's MCLT phases are kept while its magnitudes are
-replaced by the model's (gain capped at +20 dB).  Four Griffin-Lim iterations
-(synthesize → re-analyse → re-impose the target magnitude) then make magnitude
-and phase agree.  Because the phase always comes from a coherent mix of the
-actual sources, attacks are real attacks and the result never has the
-phase-vocoder "underwater" quality.  `synth="pv"` keeps the older phase-vocoder
-construction (mean instantaneous frequency, peak-locked lobes) for comparison.
+**Resynthesis.** There is no phase yet, and a made-up phase turns a note into mush. So each source is warped in the time domain with WSOLA and the sources are mixed. The mix gives the phase and the model gives the magnitudes. A few rounds of Griffin-Lim make them agree. The attacks come from the recordings themselves, so they stay sharp.
 
 <p align="center">
-  <img src="docs/img/resynth.png" width="480" alt="A loop: coherent mix, take its phase, morphed magnitudes onto that phase, inverse MCLT, MCLT again">
+  <img src="docs/img/resynth.png" width="480" alt="the resynthesis loop">
 </p>
 
-Identity weights (`[1,0,0]`) reproduce the source exactly (waveform correlation 1.000); a source morphed with a 7 ms shifted copy of itself comes back at 0.985; the level, duration and per-harmonic balance of a midpoint sit
-between the parents (`tests/test_babymaker.py`).
+## In the Browser
 
-## In the browser
+`web/lib/babymaker/` is `morph.py` rewritten in TypeScript, and it runs in a Web Worker. It skips the optimal transport step and averages the envelope in dB. That step is the next thing I want to add. It is checked against Python renders in `reference/`, and all ten random mixes match at a correlation of 1.0000.
 
-`web/lib/babymaker/` is a port of `morph.py` to TypeScript, in the
-configuration the demo runs: `synth="mix"`, `env_mode="log"`, `oversample=2`,
-`gl_iters=2`. The DCT-IV and the cepstral DCTs go through a radix-2 FFT
-(`fft.ts`, `dct.ts`), the MCLT is in `mdct.ts`, the time warp is the same
-WSOLA search (`wsola.ts`), and `morph.worker.ts` runs it all off the main
-thread.
+## Speed
 
-What it leaves out: the optimal-transport barycentre for the formant band.
-The browser interpolates the envelope in plain dB. Between instruments as
-different as a harp and an oboe that costs some quality; it is the first thing
-to port next.
+A morph of three 3.5 s notes:
 
-The port is checked against Python renders of the same six sources
-(`reference/`, written by `tools/prep-babies.py`): ten Dirichlet-random six-way
-weight vectors, compared by waveform correlation at zero lag. All ten currently
-come out at 1.0000 (the test requires > 0.99), and a one-hot weight returns the
-source exactly.
+| | laptop (Ryzen 8845HS) | desktop (Core Ultra 265K) | RTX 5060 |
+|---|---|---|---|
+| analysis | 0.5 s | 0.35 s | 0.03 s |
+| render | 0.27 s | 0.13 s | 0.008 s |
+
+The GPU backend (`gpu.py`) is used when torch finds CUDA. `--device cpu` forces numpy.
+
+<p align="center">
+  <img src="docs/img/speed.png" width="760" alt="speed compared to NSynth, RAVE and GANSynth">
+</p>
 
 ## Tests
 
 ```bash
-python3 -m pytest tests/test_babymaker.py -q     # 12 tests; the sf2 one needs FluidR3_GM + TimGM6mb in /usr/share/sounds/sf2
-cd web && npm test                               # DCT/MDCT/MIDI + the Python parity test
+python3 -m pytest tests/test_babymaker.py -q
+cd web && npm test
 ```
 
-## Rebuilding the demo's instruments
+The sf2 test needs FluidR3_GM and TimGM6mb in `/usr/share/sounds/sf2`.
 
-```bash
-SSO="/path/to/Sonatina Symphonic Orchestra/Samples" python3 tools/prep-babies.py
-```
+## Limits
 
-Takes the SSO sample nearest E5 for each instrument, cuts it to 1.7 s, runs
-`babymaker random --sources-too` on the six, writes the prepared sources to
-`web/public/media/` (16-bit, with `manifest.json`) and the Python reference
-renders to `reference/`. Rerunning it reproduces the shipped audio sample for
-sample.
-
-## Output
-
-`render` writes one float32 WAV; `grid` / `random` write
-`key<KKK>_w<weights>.wav` files, `key<KKK>_morph.json` (sources, measured pitch
-errors, config, every render's weights / duration / level) and `index.json`.
-Weights outside the simplex are accepted (extrapolation) but not guarded.
-
-## Config (`MorphConfig`)
-
-`frame` (0 = auto), `oversample` (hop = M / oversample), `cep_frac`, `cep_min/max`,
-`env_iters`, `floor_db`, `fine_gamma`, `env_mode` (`ot` | `log`), `ot_log_freq`,
-`ot_tilt_q`, `ot_q_frac`, `env_smooth_s`, `ot_grid`, `dtw_level_w`, `dtw_cep_w`, `dtw_ncep`,
-`dtw_offdiag_penalty`, `dtw_smooth_s`, `synth` (`mix` | `pv`), `max_stretch`,
-`attack_s`, `wsola_frame`, `mix_gain_max_db`, `gl_iters`, `device`, `fine_align`
-(experimental), `phase_lock`, `onset_db`, `level_floor_db`, `normalize_weights`.
-
-## Notes / limits
-
-- Mono. Sources are aligned to the key of the morph; use sources within an
-  octave or so of the key (large resampling ratios shift formants).
-- The morph is per key. For a playable instrument build one morph per key
-  (`--key 36 48 60 72 84`).
-- Unpitched sources (drums, noise) get no pitch correction and morph on
-  envelope / level / fine structure only.
-- A morph between very different instruments is limited by its *target*: the
-  blend of two magnitude spectra whose partials do not coincide is not the
-  spectrum of any signal, so 2–3 dB of magnitude error remain on such partials
-  whatever the phase reconstruction (see `fine_align` for an experimental
-  partial-displacement fix).
-## Performance
-
-Measured on a 3-source C4 morph (3.5 s sources, 44.1 kHz):
-
-| | laptop (Ryzen 8845HS), numpy | desktop (Core Ultra 265K), numpy | desktop, RTX 5060 (`--device cuda`) |
-|---|---|---|---|
-| analysis, 3 sources | 0.5 s | 0.35 s | **0.03 s** |
-| render, one weight vector | 0.27 s | 0.13 s | **0.008 s** |
-
-<p align="center">
-  <img src="docs/img/speed.png" width="760" alt="A log-scale chart of the time to morph one four-second note: NSynth 18 min, RAVE 200 ms, GANSynth 20 ms, babymaker 205 ms on the CPU, 144 ms in the browser, 31 ms on the GPU">
-</p>
-
-**GPU backend** (`gpu.py`, used automatically when torch sees a CUDA device;
-`--device cpu` forces numpy, `--device torch` runs the torch code on the CPU
-for testing).  Same maths, batched: MDCT/MDST/IMDCT as a zero-padded complex
-FFT with DCT-IV twiddles (one cuFFT call over all frames), cepstral smoothing
-as a projection on the first q DCT-II basis vectors (two thin matrix products,
-which also makes the true-envelope iterations cheap), the optimal-transport
-barycentre with batched `searchsorted` interpolation over all frames at once,
-and a batched WSOLA: block positions are predicted pitch-synchronously (each
-block starts at the sample near its nominal position whose phase matches the
-output position) and refined in two parallel rounds of FFT cross-correlation
-against the predicted neighbour, instead of the sequential search.  On real
-morphs the GPU and CPU renders match to 0.99 spectrogram correlation with the
-same HNR and harmonic-wobble figures; a one-hot render is exact on both.  Only
-the DTW alignment and the ~kB of timeline bookkeeping stay on the CPU.  The
-`pv` synthesis and `fine_align` use the numpy path.
-
-What keeps the CPU path fast:
-
-- MDCT / MDST / IMDCT run as a DCT-IV of the TDAC-folded block (O(M log M),
-  `scipy.fft`), not as a dense 2M×M matrix product;
-- the DTW core and the WSOLA block search are `numba` kernels (cached on disk;
-  the first run after an edit pays ~0.2 s of compilation); WSOLA searches every
-  4th lag and then refines;
-- the optimal-transport barycentre is solved on every 4th–5th frame and
-  interpolated (its output is smoothed over 80 ms anyway);
-- per-source features are stored as float32;
-- an sf2 source is rendered for all requested keys with one renderer call, so a
-  300 MB soundfont is loaded once per source, not once per key;
-- `grid` / `random` render the weight vectors of a key in parallel forked
-  workers (`--jobs`, default half the cores; the analysed morph is inherited,
-  nothing is pickled).  Output is bit-identical to a serial run.
+- Mono only.
+- One morph per key. Sources should be within an octave or so of the key.
+- Drums and noise get no pitch correction.
+- Very different instruments still leave a bit of error on partials that do not line up.
 
 ## Credits
 
-- Samples in `web/public/media/` and `reference/`: [Sonatina Symphonic
-  Orchestra](https://github.com/peastman/sso) by Mattias Westlund,
-  CC Sampling Plus 1.0.
-- `render/tsf.h`: [TinySoundFont](https://github.com/schellingb/TinySoundFont)
-  by Bernhard Schelling, MIT.
-- True envelope: A. Röbel and X. Rodet, "Efficient spectral envelope
-  estimation and its application to pitch shifting and envelope preservation",
-  DAFx 2005.
-- `web/public/media/alla-turca.mid`: a loop from Mozart's Rondo alla Turca
-  (K. 331).
+- Samples: [Sonatina Symphonic Orchestra](https://github.com/peastman/sso) by Mattias Westlund, CC Sampling Plus 1.0
+- `render/tsf.h`: [TinySoundFont](https://github.com/schellingb/TinySoundFont) by Bernhard Schelling, MIT
+- True envelope: A. Röbel and X. Rodet, "Efficient spectral envelope estimation and its application to pitch shifting and envelope preservation", DAFx 2005
+- `alla-turca.mid`: a loop from Mozart's Rondo alla Turca (K. 331)
